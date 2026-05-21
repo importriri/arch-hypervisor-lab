@@ -1,8 +1,5 @@
 # Arch Linux Hypervisor Lab
 
-A practical companion to building a GPU passthrough hypervisor on a laptop,
-from a clean Arch Linux install to a fully isolated four-domain lab.
-
 A step-by-step guide to building a GPU passthrough hypervisor on a laptop — from a clean Arch Linux install to a fully isolated four-domain lab. Config files, boot profiles and documented bug fixes added progressively."
 
 ---
