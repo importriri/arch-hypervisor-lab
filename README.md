@@ -3,7 +3,7 @@
 A practical companion to building a GPU passthrough hypervisor on a laptop,
 from a clean Arch Linux install to a fully isolated four-domain lab.
 
-This repo follows the course chapter by chapter, adding real config files at each stage.
+A step-by-step guide to building a GPU passthrough hypervisor on a laptop — from a clean Arch Linux install to a fully isolated four-domain lab. Config files, boot profiles and documented bug fixes added progressively."
 
 ---
 
