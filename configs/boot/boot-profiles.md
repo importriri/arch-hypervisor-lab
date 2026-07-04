@@ -3,6 +3,8 @@
 This system has 4 selectable boot profiles in systemd-boot.
 Each profile loads a different set of kernel parameters depending on intended use.
 
+**Vfio and Hardened are the base of the lab. Integrated and Nvidia are optional conveniences** (battery saving and native gaming) — the lab works without them.
+
 ```
 ┌──────────────────────────────────────────────────────────────┐
 │                        BOOT MENU                             │
@@ -23,7 +25,7 @@ Loads proprietary NVIDIA drivers on the host.
 Use: native Linux gaming, rendering, Blender.
 
 ## Arch Linux (Vfio) ← main profile for this repo
-Blacklists NVIDIA drivers and binds the GPU to vfio-pci.
+Blocks the open-source nouveau driver so vfio-pci can claim the card at boot.
 The GPU is NOT usable on the host — reserved exclusively for VMs.
 Runs on `linux-hardened` — the same kernel the final hypervisor host uses.
 
@@ -36,6 +38,7 @@ Key parameters:
 
 ## Arch Linux (Hardened)
 Kernel with extra security patches.
+Use: malware analysis, security testing. High-risk browsing lives in an isolated Whonix VM under the Vfio profile.
 
 ## Hardware IDs (RTX 3070 Mobile)
 

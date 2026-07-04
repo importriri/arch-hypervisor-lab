@@ -77,6 +77,7 @@ This bug does not appear on desktop hardware and is not documented in most VFIO 
 ```
 arch-hypervisor-lab/
 ├── README.md
+├── SETUP.md                   # how to reproduce the lab, stage by stage
 ├── problems/                  # bugs encountered and solved — written as they happen
 ├── configs/
 │   ├── network-domains.md     # the four network segments, nftables design
