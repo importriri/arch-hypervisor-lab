@@ -9,10 +9,10 @@ hypervisor included. No readable logs, no visible errors, no recovery possible w
 
 - Laptop: Acer Predator Helios 300
 - CPU: Intel Core i7 10th Gen (Comet Lake-H)
-- Dedicated GPU (VM): NVIDIA GeForce RTX 3070 Mobile / Max-Q `[10de:2f4a]`
-- GPU HDMI Audio: NVIDIA GA104 HD Audio `[10de:2f5f]`
+- Dedicated GPU (VM): NVIDIA GeForce RTX 3070 Mobile / Max-Q `[10de:249d]`
+- GPU HDMI Audio: NVIDIA GA104 HD Audio `[10de:228b]`
 - Integrated GPU (host display): Intel CometLake-H GT2 UHD Graphics
-- OS: Arch Linux, linux-zen kernel
+- OS: Arch Linux (bug found on `linux-zen`; the fix is kernel-independent — the profile now runs `linux-hardened`)
 - Bootloader: systemd-boot
 - Stack: KVM/QEMU/libvirt + VFIO
 
@@ -43,11 +43,11 @@ combination (laptop + Optimus + VFIO + this firmware behavior) was not found any
 Add the following parameters to the kernel options in the systemd-boot VFIO profile:
 
 ```
-# /boot/loader/entries/Arch-Linux-Zen-Vfio.conf
+# /boot/loader/entries/Arch-Linux-Hardened-Vfio.conf
 
 title   Arch Linux (Vfio)
-linux   /vmlinuz-linux-zen
-initrd  /initramfs-linux-zen.img
+linux   /vmlinuz-linux-hardened
+initrd  /initramfs-linux-hardened.img
 options cryptdevice=PARTUUID=YOUR-PARTUUID-HERE:root root=/dev/mapper/root \
         zswap.enabled=0 rw rootfstype=btrfs \
         intel_iommu=on iommu=pt \

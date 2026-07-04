@@ -1,6 +1,7 @@
 # Arch Linux Hypervisor Lab
 
-A step-by-step guide to building a GPU passthrough hypervisor on a laptop — from a clean Arch Linux install to a fully isolated four-domain lab. Config files, boot profiles and documented bug fixes added progressively.
+One laptop, four isolated virtual machines, one GPU passed between them.
+This repo documents the build: configs, boot profiles, and every bug I hit on the way.
 
 ---
 
@@ -27,6 +28,29 @@ Sway is installed only as a minimal Wayland compositor to run the Looking Glass 
 
 ---
 
+## How I am building it
+
+Three stages. Each one reproducible on its own.
+
+**1. Base install → [arch-bootstrap](https://github.com/importriri/arch-bootstrap)** — 🚧 *in progress*
+A bash installer written and tested from scratch: LUKS2, Btrfs subvolumes,
+systemd-boot, Secure Boot with custom keys, `linux-hardened`, zram.
+Partitioning is done and covered by a loop-device test suite; encryption is next.
+The live roadmap is in that repo's README.
+
+**2. Configuration → Ansible roles** — 📋 *planned*
+Everything after the base install: network domains (nftables), libvirt VMs,
+VFIO/GPU passthrough, the GPU handoff hooks, host hardening, the malware lab.
+Written as reusable roles, so the whole machine can be rebuilt with one command.
+
+**3. The lab → this repo**
+Configs and writeups land here as each piece goes live and gets verified
+on real hardware.
+
+Right now the work is happening in **stage 1**.
+
+---
+
 ## Prerequisites
 
 - A laptop with a dedicated NVIDIA GPU (Optimus/hybrid mode)
@@ -35,20 +59,7 @@ Sway is installed only as a minimal Wayland compositor to run the Looking Glass 
 
 ---
 
-## Course structure — what each chapter builds
-
-| Chapter | Topic | Config files added to this repo |
-|---|---|---|
-| 01 | Linux fundamentals, bash, Git | *(repo initialized)* |
-| 02 | Networking, virtual bridges, nftables | `configs/network-domains.md` |
-| 03 | Btrfs/LUKS2, systemd, Arch install from scratch | `configs/boot/` |
-| 04 | KVM, IOMMU, VFIO, GPU passthrough, CPU pinning, Looking Glass | `configs/libvirt/` |
-| 05 | Four isolated domains, GPU hooks, host hardening | `configs/hooks/` |
-| 06 | Malware lab — REMnux, INetSim, static & dynamic analysis | `configs/malware-lab/` |
-
----
-
-## Laptop-specific bug — not covered by the course
+## Laptop-specific bug — not covered by most guides
 
 **Symptom:** immediate total system freeze on VM startup with GPU passthrough.
 **Cause:** aggressive PCIe port power management enforced by laptop firmware.
@@ -68,10 +79,11 @@ arch-hypervisor-lab/
 ├── README.md
 ├── problems/                  # bugs encountered and solved — written as they happen
 ├── configs/
-│   ├── boot/                  # systemd-boot profiles        (chapter 03)
-│   ├── libvirt/               # VM XML definitions           (chapters 04-05)
-│   ├── hooks/                 # GPU switch scripts           (chapter 05)
-│   └── malware-lab/           # REMnux/INetSim configuration (chapter 06)
+│   ├── network-domains.md     # the four network segments, nftables design
+│   ├── boot/                  # systemd-boot profiles (VFIO entry included)
+│   ├── libvirt/               # VM XML definitions
+│   ├── hooks/                 # GPU switch scripts
+│   └── malware-lab/           # REMnux/INetSim configuration
 └── screenshots/               # proof it works
 ```
 

@@ -25,9 +25,10 @@ Use: native Linux gaming, rendering, Blender.
 ## Arch Linux (Vfio) ← main profile for this repo
 Blacklists NVIDIA drivers and binds the GPU to vfio-pci.
 The GPU is NOT usable on the host — reserved exclusively for VMs.
+Runs on `linux-hardened` — the same kernel the final hypervisor host uses.
 
 Key parameters:
-- `vfio-pci.ids=10de:2470,10de:2248` — PCI IDs of RTX 3070 + HDMI audio
+- `vfio-pci.ids=10de:249d,10de:228b` — PCI IDs of RTX 3070 + HDMI audio
 - `modprobe.blacklist=nouveau` — blocks the open-source driver
 - `video=efifb:off` — disables EFI framebuffer (required on laptop)
 - `pcie_port_pm=off` — **laptop freeze fix** (see problems/)
@@ -35,13 +36,12 @@ Key parameters:
 
 ## Arch Linux (Hardened)
 Kernel with extra security patches.
-Use: malware analysis, security testing, high-risk browsing.
 
 ## Hardware IDs (RTX 3070 Mobile)
 
 ```
-10de:2470  →  NVIDIA GA104M GeForce RTX 3070 Mobile / Max-Q
-10de:2248  →  NVIDIA GA104 High Definition Audio Controller
+10de:249d  →  NVIDIA GA104M GeForce RTX 3070 Mobile / Max-Q
+10de:228b  →  NVIDIA GA104 High Definition Audio Controller
 ```
 
 Verify with: `lspci -nnk | grep -A3 NVIDIA`
