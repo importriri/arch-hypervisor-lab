@@ -48,7 +48,8 @@ Add the following parameters to the kernel options in the systemd-boot VFIO prof
 title   Arch Linux (Vfio)
 linux   /vmlinuz-linux-hardened
 initrd  /initramfs-linux-hardened.img
-options cryptdevice=PARTUUID=YOUR-PARTUUID-HERE:root root=/dev/mapper/root \
+# LUKS container UUID (from: cryptsetup luksUUID /dev/nvme0n1pX) — NOT the GPT PARTUUID
+options rd.luks.name=YOUR-LUKS-UUID-HERE=root root=/dev/mapper/root \
         zswap.enabled=0 rw rootfstype=btrfs \
         intel_iommu=on iommu=pt \
         nvidia-drm.modeset=0 \
