@@ -25,8 +25,8 @@ A bash installer, written and tested from scratch, that produces the base the
 whole lab stands on: LUKS2-encrypted disk, Btrfs subvolumes, systemd-boot,
 Secure Boot with custom keys, `linux-hardened`, zram.
 
-- Status: **in progress.** Partitioning is done and covered by a test suite;
-  encryption is next. Live roadmap in that repo README.
+- Status: **in active development**, published milestone by milestone. The
+  live roadmap and current state are in that repo's README.
 - When done, this stage is a single script run from the Arch ISO.
 
 Until stage 1 is complete, follow the Arch Wiki for the install and use this
@@ -40,8 +40,8 @@ Everything above the base OS, as reusable Ansible roles: the four network
 domains (nftables), the libvirt VMs, VFIO/GPU passthrough, the GPU handoff
 hooks, host hardening, the malware lab.
 
-- Status: **planned.** This becomes its own repo; this line turns into a link
-  when it lands.
+- Status: **in progress** — lands as its own repo, `privatestack-ansible`;
+  this line turns into a link when it lands.
 - Goal: rebuild the entire configured host with one command, so the lab is not
   a week of manual setup but an afternoon.
 
@@ -64,7 +64,7 @@ the lab; Integrated and Nvidia are optional conveniences.**
 | Integrated | linux-hardened | iGPU only | light work, battery saving |
 | Nvidia | linux-hardened | dGPU on host | native Linux gaming / rendering |
 
-All four are placeholders until you set your own `PARTUUID` and confirm your
+All four are placeholders until you set your own LUKS container UUID (`cryptsetup luksUUID /dev/nvme0n1pX` — **not** the GPT PARTUUID) and confirm your
 GPU PCI IDs (`lspci -nn | grep -i nvidia`). See each `.conf` for the details.
 
 ### Network domains (`configs/network-domains.md`)

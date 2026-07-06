@@ -35,13 +35,18 @@ Three stages. Each one reproducible on its own.
 **1. Base install → [arch-bootstrap](https://github.com/importriri/arch-bootstrap)** — 🚧 *in progress*
 A bash installer written and tested from scratch: LUKS2, Btrfs subvolumes,
 systemd-boot, Secure Boot with custom keys, `linux-hardened`, zram.
-Partitioning is done and covered by a loop-device test suite; encryption is next.
+Every phase is written — partitioning through Secure Boot signing, plus an
+optional second encrypted disk dedicated to VM storage — and is being
+published milestone by milestone. Three test layers back it: unit (real
+functions, stubbed tools), a real LUKS2 header check, and a full
+partition→mount pipeline on loop devices. What's left is real-hardware validation.
 The live roadmap is in that repo's README.
 
-**2. Configuration → Ansible roles** — 📋 *planned*
+**2. Configuration → Ansible roles** — 🚧 *in progress*
 Everything after the base install: network domains (nftables), libvirt VMs,
 VFIO/GPU passthrough, the GPU handoff hooks, host hardening, the malware lab.
 Written as reusable roles, so the whole machine can be rebuilt with one command.
+Lands as its own repo: `privatestack-ansible`.
 
 **3. The lab → this repo**
 Configs and writeups land here as each piece goes live and gets verified

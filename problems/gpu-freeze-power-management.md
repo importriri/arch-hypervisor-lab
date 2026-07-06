@@ -49,28 +49,29 @@ title   Arch Linux (Vfio)
 linux   /vmlinuz-linux-hardened
 initrd  /initramfs-linux-hardened.img
 # LUKS container UUID (from: cryptsetup luksUUID /dev/nvme0n1pX) — NOT the GPT PARTUUID
-options rd.luks.name=YOUR-LUKS-UUID-HERE=root root=/dev/mapper/root \
-        zswap.enabled=0 rw rootfstype=btrfs \
-        intel_iommu=on iommu=pt \
-        nvidia-drm.modeset=0 \
-        rd.driver.blacklist=nouveau \
-        modprobe.blacklist=nouveau \
-        module_blacklist=nouveau \
-        vfio-pci.ids=10de:249d,10de:228b \
-        video=efifb:off \
-        pcie_port_pm=off \
-        pcie_aspm=off \
-        kvm.ignore_msrs=1
-```
+options rd.luks.name=YOUR-LUKS-UUID-HERE=root root=/dev/mapper/root rw rootfstype=btrfs zswap.enabled=0
+options intel_iommu=on iommu=pt
+options vfio-pci.ids=10de:249d,10de:228b
+options modprobe.blacklist=nouveau module_blacklist=nouveau nvidia-drm.modeset=0
+options video=efifb:off pcie_port_pm=off pcie_aspm=off kvm.ignore_msrs=1
 
-### Parameter breakdown
-
-| Parameter | Purpose |
-|---|---|
-| `intel_iommu=on iommu=pt` | Enables IOMMU in passthrough mode — required for VFIO |
-| `pcie_port_pm=off` | **The actual fix** — disables PCIe port power management |
-| `pcie_aspm=off` | Disables Active State Power Management — redundant on this hardware but useful safety net for similar laptops |
-| `kvm.ignore_msrs=1` | Prevents crashes in Windows games accessing unsupported MSR registers |
+# Replace YOUR-LUKS-UUID-HERE with your actual LUKS container UUID
+# To find it: cryptsetup luksUUID /dev/nvme0n1pX   (the LUKS partition, e.g. ...p2)
+#
+# Key parameters explained:
+#   intel_iommu=on iommu=pt  — enables IOMMU in passthrough mode (required for VFIO)
+#   vfio-pci.ids=...         — binds RTX 3070 GPU + HDMI audio to vfio-pci at boot
+#   modprobe.blacklist=nouveau — blocks nouveau at the modprobe/udev level
+#   module_blacklist=nouveau   — same block, enforced by the kernel itself;
+#                              two different mechanisms on purpose (belt+braces)
+#   video=efifb:off          — disables EFI framebuffer (required on laptops with Optimus)
+#   pcie_port_pm=off         — disables PCIe port power management
+#                              THIS is the fix for the immediate freeze on this laptop
+#   pcie_aspm=off            — disables Active State Power Management
+#                              redundant on this hardware but useful safety net
+#                              for similar laptops where freeze persists
+#   kvm.ignore_msrs=1        — prevents crashes in Windows games that access
+#                              unsupported MSR registers inside the VM
 
 > `pcie_port_pm=off` and `pcie_aspm=off` control two different mechanisms.
 > On this hardware only `pcie_port_pm=off` was needed to fix the freeze.
