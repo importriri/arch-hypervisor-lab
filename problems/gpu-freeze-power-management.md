@@ -49,7 +49,7 @@ title   Arch Linux (Vfio)
 linux   /vmlinuz-linux-hardened
 initrd  /initramfs-linux-hardened.img
 # LUKS container UUID (from: cryptsetup luksUUID /dev/nvme0n1pX) — NOT the GPT PARTUUID
-options rd.luks.name=YOUR-LUKS-UUID-HERE=root root=/dev/mapper/root rw rootfstype=btrfs zswap.enabled=0
+options rd.luks.name=YOUR-LUKS-UUID-HERE=cryptroot root=/dev/mapper/cryptroot rw rootfstype=btrfs rootflags=subvol=@ zswap.enabled=0
 options intel_iommu=on iommu=pt
 options vfio-pci.ids=10de:249d,10de:228b
 options modprobe.blacklist=nouveau module_blacklist=nouveau nvidia-drm.modeset=0

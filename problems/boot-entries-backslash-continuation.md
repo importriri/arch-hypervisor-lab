@@ -5,7 +5,7 @@ Caught in review, again before it cost a reboot — and this one would have
 parameters split over several lines with a trailing `\`, shell-style:
 
 ```
-options rd.luks.name=...=root root=/dev/mapper/root \
+options rd.luks.name=...=cryptroot root=/dev/mapper/cryptroot \
         zswap.enabled=0 rw rootfstype=btrfs \
         intel_iommu=on iommu=pt \
         vfio-pci.ids=10de:249d,10de:228b \
@@ -52,7 +52,7 @@ lines.
 One `options` line per logical group, no continuations:
 
 ```
-options rd.luks.name=YOUR-LUKS-UUID-HERE=root root=/dev/mapper/root rw rootfstype=btrfs zswap.enabled=0
+options rd.luks.name=YOUR-LUKS-UUID-HERE=cryptroot root=/dev/mapper/cryptroot rw rootfstype=btrfs rootflags=subvol=@ zswap.enabled=0
 options intel_iommu=on iommu=pt
 options vfio-pci.ids=10de:249d,10de:228b
 options modprobe.blacklist=nouveau module_blacklist=nouveau nvidia-drm.modeset=0
