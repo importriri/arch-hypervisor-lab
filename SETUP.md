@@ -40,8 +40,9 @@ Everything above the base OS, as reusable Ansible roles: the four network
 domains (nftables), the libvirt VMs, VFIO/GPU passthrough, the GPU handoff
 hooks, host hardening, the malware lab.
 
-- Status: **in progress** — lands as its own repo, `privatestack-ansible`;
-  this line turns into a link when it lands.
+- Status: **in progress** — lives at
+  [privatestack-ansible](https://github.com/importriri/privatestack-ansible);
+  the brick catalog in its README tracks what has landed.
 - Goal: rebuild the entire configured host with one command, so the lab is not
   a week of manual setup but an afternoon.
 

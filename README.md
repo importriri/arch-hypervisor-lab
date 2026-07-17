@@ -46,13 +46,15 @@ The live roadmap is in that repo's README.
 Everything after the base install: network domains (nftables), libvirt VMs,
 VFIO/GPU passthrough, the GPU handoff hooks, host hardening, the malware lab.
 Written as reusable roles, so the whole machine can be rebuilt with one command.
-Lands as its own repo: `privatestack-ansible`.
+Lives in its own repo:
+[privatestack-ansible](https://github.com/importriri/privatestack-ansible) —
+the brick catalog in its README tracks what has landed.
 
 **3. The lab → this repo**
 Configs and writeups land here as each piece goes live and gets verified
 on real hardware.
 
-Right now the work is happening in **stage 1**.
+Right now the work is happening in **stages 1 and 2**.
 
 ---
 
