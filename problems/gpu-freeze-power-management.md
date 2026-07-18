@@ -109,6 +109,27 @@ an immediate total freeze when starting a VFIO passthrough VM:
 2. If freeze persists, add `pcie_aspm=off`
 3. Make sure `intel_iommu=on iommu=pt` is also present
 
+## Related reports (found later)
+
+When this fix was isolated (no guides, no AI tools — see above), none of the
+reports below existed yet. Since then the same power-management family has
+started surfacing on desktops, where it announces itself in `dmesg` as
+`Unable to change power state from D3cold to D0` before failing:
+
+- [Arch BBS — NVIDIA GPU passthrough freezes on host startup](https://bbs.archlinux.org/viewtopic.php?id=286946)
+  (mid-2023, desktop) — solved with `pcie_port_pm=off`, found by the author
+  "in a post in proxmox forum"
+- [Arch BBS — VFIO PCI graphics card freezing the system](https://bbs.archlinux.org/viewtopic.php?id=286995)
+  (late 2023, HP Z840 workstation) — same parameter in the kernel cmdline
+- Recent Proxmox-oriented guides now ship `pcie_port_pm=off pcie_aspm=off`
+  in their example cmdlines for desktop passthrough
+
+On this laptop the D3cold error never gets the chance to print — the freeze
+lands before any log is written, which is what made the diagnosis blind.
+The laptop/Optimus case — firmware-enforced port power management with the
+GPU under VFIO control — is still not covered by the guides. This page is
+that writeup.
+
 ## References
 
 - [Arch Wiki — PCI passthrough via OVMF](https://wiki.archlinux.org/title/PCI_passthrough_via_OVMF)

@@ -73,7 +73,10 @@ Right now the work is happening in **stages 1 and 2**.
 **Fix:** `pcie_port_pm=off` (and optionally `pcie_aspm=off`) in the systemd-boot VFIO kernel parameters.
 **Time to find it:** ~2 months. No AI tools were available at the time.
 
-This bug does not appear on desktop hardware and is not documented in most VFIO guides.
+On desktops the same power-management family usually announces itself in
+`dmesg` (`Unable to change power state from D3cold to D0`) before failing;
+on this laptop the freeze lands before any log is written. The laptop/Optimus
+case is still missing from the guides.
 
 → Full writeup: [`problems/gpu-freeze-power-management.md`](problems/gpu-freeze-power-management.md)
 
