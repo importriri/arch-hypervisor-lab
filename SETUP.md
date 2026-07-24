@@ -74,10 +74,20 @@ The four isolated segments and the nftables design that keeps them apart,
 including the GPU handoff rule (the card never moves from a low-trust domain to
 a high-trust one without a full shutdown through the host).
 
+### Looking Glass (`configs/looking-glass.md`)
+
+How the host gets a window onto the VM that owns the GPU, and where the
+automation line falls: the host side is an ansible brick, the Windows half is
+manual and written down step by step in `configs/virtual-display-windows.md`.
+Read the verification protocol before believing the picture on screen — the
+client draws a plausible fallback when nothing is working.
+
+The device fragment for the domain XML is in `configs/libvirt/looking-glass.xml`.
+
 ### The rest
 
-`configs/libvirt/`, `configs/hooks/`, `configs/malware-lab/` fill in as stage 2
-produces and verifies them.
+`configs/hooks/`, `configs/malware-lab/` and the remaining `configs/libvirt/`
+definitions fill in as stage 2 produces and verifies them.
 
 ---
 

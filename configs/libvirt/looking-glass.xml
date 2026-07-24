@@ -1,0 +1,80 @@
+<!--
+  Looking Glass — the device fragment for a passthrough domain.
+
+  Not a complete domain: these are the pieces you add to one that already
+  boots with its GPU. Full context in ../looking-glass.md.
+
+  The size below (33554432 = 32 MiB) must equal static_size_mb in
+  /etc/modprobe.d/kvmfr.conf on the host. One buffer, two sides.
+-->
+
+<!--
+  1. The namespace, on the <domain> element itself. Without it libvirt
+     rejects the <qemu:commandline> block below, and it has to be added in
+     the same edit as the block, not before it.
+
+     <domain type='kvm' xmlns:qemu='http://libvirt.org/schemas/domain/qemu/1.0'>
+-->
+
+<!--
+  2. The shared memory, as a raw QEMU device.
+
+     The native <shmem> element can only back onto a file in /dev/shm. The
+     kvmfr character device gives the client a DMA path instead of a copy,
+     and reaching it means going through qemu:commandline. This block sits
+     as a direct child of <domain>, next to </devices>, not inside it.
+-->
+<qemu:commandline>
+  <qemu:arg value="-device"/>
+  <qemu:arg value="{'driver':'ivshmem-plain','id':'shmem0','memdev':'looking-glass'}"/>
+  <qemu:arg value="-object"/>
+  <qemu:arg value="{'qom-type':'memory-backend-file','id':'looking-glass','mem-path':'/dev/kvmfr0','size':33554432,'share':true}"/>
+</qemu:commandline>
+
+<!--
+  2b. Fallback if you skip the kvmfr module: a plain /dev/shm file. Loses the
+      DMA path, works the same otherwise. Goes inside <devices>, and then the
+      client wants shmFile=/dev/shm/looking-glass.
+
+      <shmem name='looking-glass'>
+        <model type='ivshmem-plain'/>
+        <size unit='M'>32</size>
+      </shmem>
+
+      It also needs the file to exist with the right owner at boot:
+      /etc/tmpfiles.d/10-looking-glass.conf
+        f /dev/shm/looking-glass 0660 <user> kvm -
+-->
+
+<!--
+  3. Inside <devices>: input and the display server for it.
+
+     Looking Glass carries the picture; SPICE carries keyboard and mouse.
+     The tablet is removed on purpose — an absolute pointer and a captured
+     relative one fight over the cursor. Without vioinput installed in the
+     guest the mouse is dead while the keyboard still works through the
+     emulated PS/2 controller: a misleading pair of symptoms.
+-->
+<devices>
+  <input type='mouse' bus='virtio'/>
+  <input type='keyboard' bus='virtio'/>
+
+  <graphics type='spice' autoport='yes' listen='127.0.0.1'/>
+
+  <!--
+    Keep the emulated display until Looking Glass is verified: it is what
+    virt-manager shows you, and it is how you recover from a mistake made
+    inside the guest. Setting it to 'none' is the last step, never an early
+    one, and <graphics type='spice'> stays either way for input.
+  -->
+  <video>
+    <model type='vga'/>
+  </video>
+
+  <!--
+    Ballooning does nothing useful here: a PCI hostdev makes the IOMMU pin
+    the whole guest allocation up front. Leaving the balloon in place only
+    adds a device that lies about what it can reclaim.
+  -->
+  <memballoon model='none'/>
+</devices>
