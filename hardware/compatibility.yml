@@ -1,0 +1,29 @@
+schema: 1
+status_definitions:
+  component-verified: a named subsystem has repeatable evidence
+  pipeline-pending: full clean-install and idempotent configuration evidence is missing
+  pipeline-verified: all release gates passed at pinned commits
+systems:
+  nitro-3060:
+    vendor: Acer
+    family: Nitro 5
+    gpu: NVIDIA RTX 3060 Mobile
+    vfio_ids: ["10de:2520", "10de:228e"]
+    components:
+      gpu_passthrough: component-verified
+      looking_glass_virtual_display: component-verified
+      full_pipeline: pipeline-pending
+    evidence:
+      - ../problems/geforce-passthrough-needs-a-display.md
+      - ../problems/looking-glass-shows-spice-and-calls-it-success.md
+      - ../problems/kvmfr-device-permissions.md
+  predator-3070:
+    vendor: Acer
+    family: Predator Helios 300
+    gpu: NVIDIA RTX 3070 Mobile / Max-Q
+    vfio_ids: ["10de:249d", "10de:228b"]
+    components:
+      gpu_passthrough_power_management_fix: component-verified
+      full_pipeline: pipeline-pending
+    evidence:
+      - ../problems/gpu-freeze-power-management.md
