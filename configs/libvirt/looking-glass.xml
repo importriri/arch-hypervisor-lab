@@ -50,6 +50,8 @@
   3. Inside <devices>: input and the display server for it.
 
      Looking Glass carries the picture; SPICE carries keyboard and mouse.
+     The client contract is 127.0.0.1:5900, so the domain must use that fixed
+     port. autoport=yes can select another port and silently break input.
      The tablet is removed on purpose — an absolute pointer and a captured
      relative one fight over the cursor. Without vioinput installed in the
      guest the mouse is dead while the keyboard still works through the
@@ -59,7 +61,7 @@
   <input type='mouse' bus='virtio'/>
   <input type='keyboard' bus='virtio'/>
 
-  <graphics type='spice' autoport='yes' listen='127.0.0.1'/>
+  <graphics type='spice' port='5900' autoport='no' listen='127.0.0.1'/>
 
   <!--
     Keep the emulated display until Looking Glass is verified: it is what

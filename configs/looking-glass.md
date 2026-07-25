@@ -136,6 +136,22 @@ the cockpit. `libdecor` draws the window decorations sway does not draw for it.
 
 ---
 
+## Fixed SPICE input endpoint
+
+The managed client uses `127.0.0.1:5900`. The libvirt domain therefore uses:
+
+```xml
+<graphics type='spice' port='5900' autoport='no' listen='127.0.0.1'/>
+```
+
+Check it with `virsh domdisplay <guest>`. A client pinned to 5900 and a domain
+using `autoport='yes'` are not the same configuration, even when video happens
+to arrive through kvmfr.
+
+The pinned B7 client also expects INI comments to begin with `;`, not `#`. See
+[`../problems/looking-glass-client-ini-comments.md`](../problems/looking-glass-client-ini-comments.md).
+
+
 ## Verification protocol
 
 Three lines decide whether this works. Nothing else counts — not what the
