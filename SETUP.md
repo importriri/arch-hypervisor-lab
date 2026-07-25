@@ -1,105 +1,104 @@
-# Setup — how to reproduce this lab
+# Reproduce and validate the pipeline
 
-This lab is meant to be **reproducible by anyone**, not just on my machine.
-The point is not to lock the hardware down — it is to make dangerous work
-(malware, offensive/defensive testing against PLCs) safe to run on your own
-gear, with the consequences contained and documented. Security here means
-freedom made safe, not freedom removed.
+This is a three-stage system. Run each stage at a pinned commit and keep the
+logs together; a compatibility claim without commit IDs is not reproducible.
 
-The build is a pipeline of three stages. Each stage is reproducible on its own
-and hands a known-good state to the next.
-
-```
-  arch-bootstrap            Ansible roles              this repo
-  (bash installer)   ─────▶ (configuration)   ─────▶  (configs + writeups)
-  base OS, encrypted        network, VMs, VFIO,        boot profiles, the
-  disk, hardened kernel     GPU hooks, hardening       four-domain lab
-        🚧                        📋                         ✅ (grows)
+```text
+arch-bootstrap ──> privatestack-ansible ──> arch-hypervisor-lab evidence
+base OS            host configuration       architecture + compatibility
 ```
 
----
+## 0. Record the candidate
 
-## Stage 1 — Base install → [arch-bootstrap](https://github.com/importriri/arch-bootstrap)
+Before touching a laptop, record the commit of all three repositories and the
+intended hardware profile. Back up the machine and verify that the backup can
+be read.
 
-A bash installer, written and tested from scratch, that produces the base the
-whole lab stands on: LUKS2-encrypted disk, Btrfs subvolumes, systemd-boot,
-Secure Boot with custom keys, `linux-hardened`, zram.
+## 1. Install the encrypted base
 
-- Status: **in active development**, published milestone by milestone. The
-  live roadmap and current state are in that repo's README.
-- When done, this stage is a single script run from the Arch ISO.
+Follow `arch-bootstrap/docs/release-gates.md`:
 
-Until stage 1 is complete, follow the Arch Wiki for the install and use this
-repo boot profiles as your systemd-boot entries (see below).
+1. run its local verification;
+2. run the default dry-run;
+3. perform the clean install;
+4. complete Secure Boot enrollment manually;
+5. boot the Hardened entry twice and verify mounts/networking.
 
----
+The optional second disk is a separate LUKS2 container mounted at
+`/var/lib/libvirt/images`. Its No_COW contract is established with `chattr +C`
+while empty, not with a misleading per-subvolume mount option.
 
-## Stage 2 — Configuration → Ansible roles
+## 2. Detect the laptop and assemble the host
 
-Everything above the base OS, as reusable Ansible roles: the four network
-domains (nftables), the libvirt VMs, VFIO/GPU passthrough, the GPU handoff
-hooks, host hardening, the malware lab.
+```bash
+git clone https://github.com/importriri/privatestack-ansible.git
+cd privatestack-ansible
+ansible-galaxy collection install -r collections/requirements.yml
 
-- Status: **in progress** — lives at
-  [privatestack-ansible](https://github.com/importriri/privatestack-ansible);
-  the brick catalog in its README tracks what has landed.
-- Goal: rebuild the entire configured host with one command, so the lab is not
-  a week of manual setup but an afternoon.
+ansible-playbook playbooks/preflight.yml
+ansible-playbook playbooks/lab.yml --check --diff
+ansible-playbook playbooks/lab.yml
+ansible-playbook playbooks/lab.yml
+```
 
----
+The preflight must select exactly one reviewed profile (`nitro-3060` or
+`predator-3070`) and validate both the GPU and its HDMI-audio function. The
+second real run must report `changed=0`.
 
-## Stage 3 — The lab → this repo
+Existing active libvirt networks are not silently replaced. When the role finds
+persistent XML drift, stop attached guests and opt into the maintenance-window
+restart it prints:
 
-The configs and writeups that make the four-domain lab real. They land here as
-each piece goes live and is verified on real hardware.
+```bash
+ansible-playbook playbooks/lab.yml -e network_domains_restart_changed=true
+```
 
-### Boot profiles (`configs/boot/`)
+## 3. Verify the five domains
 
-systemd-boot entries, one per intended use. **Vfio and Hardened are the base of
-the lab; Integrated and Nvidia are optional conveniences.**
+The expected persistent networks are:
 
-| Profile | Kernel | GPU | Use |
+| Domain | Bridge | Subnet | Forwarding |
 |---|---|---|---|
-| **Hardened** | linux-hardened | none special | secure default, malware analysis, security testing |
-| **Vfio** | linux-hardened | dGPU → VFIO | run a VM with GPU passthrough (main lab profile) |
-| Integrated | linux-hardened | iGPU only | light work, battery saving |
-| Nvidia | linux-hardened | dGPU on host | native Linux gaming / rendering |
+| clean | `virbr-clean` | `10.10.1.0/24` | NAT |
+| dirty | `virbr-dirty` | `10.10.2.0/24` | NAT |
+| dev | `virbr-dev` | `10.10.3.0/24` | NAT |
+| lab | `virbr-lab` | `10.10.4.0/24` | none |
+| services | `virbr-services` | `10.10.5.0/24` | NAT |
 
-All four are placeholders until you set your own LUKS container UUID (`cryptsetup luksUUID /dev/nvme0n1pX` — **not** the GPT PARTUUID) and confirm your
-GPU PCI IDs (`lspci -nn | grep -i nvidia`). See each `.conf` for the details.
+Verify persistent XML with `virsh net-dumpxml --inactive NAME`, not only the
+currently active bridge. Test that guests cannot cross bridges, that the lab
+cannot reach the internet, and that services are reachable only through
+explicitly documented exposure rules.
 
-### Network domains (`configs/network-domains.md`)
+## 4. Validate VFIO and GPU handoff
 
-The four isolated segments and the nftables design that keeps them apart,
-including the GPU handoff rule (the card never moves from a low-trust domain to
-a high-trust one without a full shutdown through the host).
+Boot the managed VFIO entry and verify that the selected profile's two PCI IDs
+are bound to `vfio-pci`. Start one GPU VM at a time. A transition from lower to
+higher trust requires a host reboot; `services` never participates in GPU
+rotation.
 
-### Looking Glass (`configs/looking-glass.md`)
+## 5. Add the optional cockpit
 
-How the host gets a window onto the VM that owns the GPU, and where the
-automation line falls: the host side is an ansible brick, the Windows half is
-manual and written down step by step in `configs/virtual-display-windows.md`.
-Read the verification protocol before believing the picture on screen — the
-client draws a plausible fallback when nothing is working.
+Run `playbooks/desktop.yml` before `playbooks/looking-glass.yml`. The libvirt
+SPICE endpoint for the Looking Glass guest must be fixed at
+`127.0.0.1:5900`, matching the client configuration. `autoport='yes'` is not a
+valid contract when the client is pinned to port 5900.
 
-The device fragment for the domain XML is in `configs/libvirt/looking-glass.xml`.
+The Windows Looking Glass host and virtual display remain manual. Use the log
+assertions in `configs/looking-glass.md`; a visible SPICE fallback is not proof
+that shared-memory capture works.
 
-### The rest
+## 6. Produce compatibility evidence
 
-`configs/hooks/`, `configs/malware-lab/` and the remaining `configs/libvirt/`
-definitions fill in as stage 2 produces and verifies them.
+From this repository:
 
----
+```bash
+sudo scripts/collect-hardware-report.sh hardware/reports/<profile>-<date>.md
+python scripts/verify_repo.py
+```
 
-## Why this matters for what comes next
-
-Future work — offensive and defensive security, especially against PLCs — needs
-somewhere legal and isolated to run. This lab is that place: the air-gapped
-Malware Lab domain is where payloads get analysed against simulated industrial
-targets without touching anything real, on hardware I own, asking no one for
-permission.
-
-That is why reproducibility is the whole point. The faster someone can stand
-this lab up, the sooner they can get to the actual experiments. Future repos
-will list this lab as a prerequisite — and thanks to stages 1 and 2, meeting
-that prerequisite should take an afternoon, not days.
+Review the report before publishing. The script intentionally excludes serial
+numbers, MAC addresses and IP addresses. Complete
+`hardware/report-template.md`, link logs/screenshots/writeups, and only then
+change `full_pipeline` from `pending` to `verified` in
+`hardware/compatibility.yml`.
