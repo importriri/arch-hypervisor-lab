@@ -1,64 +1,59 @@
 # Arch Linux Hypervisor Lab
 
-Two target laptops, five security domains, and one NVIDIA dGPU passed to one
-workload VM at a time. This repository is the public architecture record for a
-three-repository pipeline: configs, validation evidence, compatibility status,
-and every failure that changed the design.
-
-## Architecture
+Architecture notes, configuration examples and test records for an Arch Linux
+KVM/VFIO lab running on two Acer laptops.
 
 ```text
-Arch Linux host (LUKS2 · Btrfs · linux-hardened · systemd-boot)
-│
-├── clean     10.10.1.0/24  NAT       verified gaming/accounts
-├── dirty     10.10.2.0/24  NAT       mods and untrusted gaming software
-├── dev       10.10.3.0/24  NAT       development and 3D work
-├── lab       10.10.4.0/24  ISOLATED  malware/OT experiments
-└── services  10.10.5.0/24  NAT       service VMs; explicit exposure only
+Arch Linux host (LUKS2, Btrfs, linux-hardened, systemd-boot)
+|
+|-- clean     10.10.1.0/24  NAT       trusted accounts and games
+|-- dirty     10.10.2.0/24  NAT       mods and untrusted software
+|-- dev       10.10.3.0/24  NAT       development and 3D work
+|-- lab       10.10.4.0/24  ISOLATED  malware and OT experiments
+`-- services  10.10.5.0/24  NAT       private service VMs
 
-NVIDIA dGPU ── VFIO ──> one of clean / dirty / dev / lab
-                         (never services; trust-ranked handoff)
+NVIDIA dGPU -- VFIO --> one of clean / dirty / dev / lab
 ```
 
-A network domain is not the same thing as a VM. Multiple service VMs can live
-in `services`; the GPU-owning Windows templates live in the four workload
-domains. The host remains headless by default. Sway and Looking Glass are
-optional cockpit components, not a requirement of the secure base host.
+The dGPU is assigned to one workload VM at a time. It is never part of the
+`services` domain. The host remains headless by default; Sway and Looking Glass
+are optional administration components on the iGPU.
 
-## The published pipeline
+## Repository set
 
-1. **[arch-bootstrap](https://github.com/importriri/arch-bootstrap)** installs
-   the encrypted Arch foundation and optional encrypted VM disk.
-2. **[privatestack-ansible](https://github.com/importriri/privatestack-ansible)**
-   detects a reviewed laptop profile and assembles KVM, VFIO, five networks,
-   isolation and GPU handoff.
-3. **This repository** records the intended architecture and the evidence that
-   each exact commit worked on exact hardware.
+1. [arch-bootstrap](https://github.com/importriri/arch-bootstrap) installs the
+   encrypted base system and optional encrypted VM disk.
+2. [privatestack-ansible](https://github.com/importriri/privatestack-ansible)
+   configures KVM, networking, isolation, boot profiles and GPU hand-off.
+3. This repository records the design, setup order, failures and compatibility
+   results.
 
-The current known profiles are the Acer Nitro 5 with RTX 3060 Mobile and Acer
-Predator Helios 300 with RTX 3070 Mobile. Both have component-level evidence;
-neither is labelled a complete public-pipeline pass until a clean install and
-second idempotent Ansible run are recorded. See
-[`hardware/README.md`](hardware/README.md).
+The known profiles are an Acer Nitro 5 with an RTX 3060 Mobile and an Acer
+Predator Helios 300 with an RTX 3070 Mobile. Individual components have been
+exercised on both machines, but a complete compatibility result is recorded
+only after a clean install and a second idempotent Ansible run. Current status
+is in [`hardware/README.md`](hardware/README.md).
 
-## Laptop-specific VFIO freeze
+## PCIe power-management freeze
 
-On the Predator, starting the RTX 3070 passthrough guest caused an immediate
-host freeze before useful logs. The working boot profile disables PCIe port
-power management with `pcie_port_pm=off` and keeps `pcie_aspm=off` as the
-safety net.
+The immediate host freeze was first isolated on the Nitro while starting a
+passthrough guest. Disabling PCIe port power management with
+`pcie_port_pm=off` stopped the freeze. The Predator later reproduced the same
+failure without that parameter and confirmed the same fix. `pcie_aspm=off` is
+kept in the VFIO profile as the related fallback used by this lab.
 
-Full writeup:
+Full notes:
 [`problems/gpu-freeze-power-management.md`](problems/gpu-freeze-power-management.md).
 
-## Looking Glass without a dummy plug
+## Looking Glass without a physical display
 
-The Nitro evidence covers the harder no-physical-display path: a Windows
-virtual display keeps the passed RTX 3060 active, kvmfr carries the frames, and
-SPICE is retained only for input/recovery. The client log, not the visible
-window, is the success criterion.
+On the Nitro, the only output wired to the passed GPU cannot be used. A Windows
+virtual display keeps the RTX 3060 active, kvmfr carries the framebuffer and
+SPICE remains available only for input and recovery. The Looking Glass client
+log and kvmfr state are used to distinguish real shared-memory capture from the
+plausible SPICE fallback.
 
-Start here:
+Relevant files:
 
 - [`configs/looking-glass.md`](configs/looking-glass.md)
 - [`configs/virtual-display-windows.md`](configs/virtual-display-windows.md)
@@ -70,11 +65,11 @@ Start here:
 ## Repository map
 
 ```text
-configs/      reference boot, network, libvirt and guest configuration
+configs/      boot, network, libvirt and guest configuration examples
 hardware/     compatibility matrix, evidence policy and report template
-problems/     root-cause writeups, indexed by symptom
-scripts/      sanitized hardware report and repository verifier
-SETUP.md      end-to-end execution and validation order
+problems/     failure investigations and fixes
+scripts/      hardware report collector and repository verifier
+SETUP.md      end-to-end setup and validation order
 ```
 
 Run the repository checks with:
@@ -84,16 +79,9 @@ python scripts/verify_repo.py
 bash -n scripts/collect-hardware-report.sh
 ```
 
-## Scope and safety
+## Scope
 
-The isolated lab is for defensive research, malware analysis and controlled
-experiments on hardware and systems you own or are authorized to test. The
-network model denies cross-domain forwarding and gives the lab no uplink by
-default. Any deliberate exposure belongs in a reviewed allowlist, never in an
-ad-hoc host rule.
-
-## Keywords
-
-`KVM laptop` `VFIO laptop` `GPU passthrough laptop` `NVIDIA Optimus passthrough`
-`pcie_port_pm laptop fix` `five domain hypervisor` `Looking Glass kvmfr`
-`Arch Linux hypervisor` `isolated malware lab` `hardware compatibility matrix`
+The isolated network is intended for defensive research and controlled tests
+on systems you own or are authorized to examine. It has no uplink by default,
+and the host rules block forwarding between trust domains. Any deliberate LAN
+exposure belongs in the documented allowlist.
