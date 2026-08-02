@@ -49,6 +49,41 @@ for entry in (root / "configs/boot").glob("*.conf"):
     if re.search(r"\\\s*$", text, re.MULTILINE):
         fail(f"backslash continuation in {entry.name}")
 
+readme = (root / "README.md").read_text(encoding="utf-8")
+setup = (root / "SETUP.md").read_text(encoding="utf-8")
+canonical_lg_build = "B7-263-g0140a3f6fb"
+if "the normal laptop target adds Sway and the Looking Glass host transport" not in readme:
+    fail("README must describe Sway and Looking Glass as part of the normal laptop target")
+if "The `playbooks/lab.yml` run in step 2 already installed Sway" not in setup:
+    fail("SETUP must not present the integrated cockpit as a separate installation")
+for stale in (
+    "host remains headless by default",
+    "Add the optional cockpit",
+    "from `pending` to `verified`",
+):
+    if stale in readme or stale in setup:
+        fail(f"stale pipeline topology claim: {stale}")
+for heading in (
+    "## 4. Prepare and seal images",
+    "## 5. Exercise explicit VM lifecycle",
+    "## 8. Register services before creation",
+):
+    if heading not in setup:
+        fail(f"SETUP missing current stage-2 boundary: {heading}")
+for relative in (
+    "configs/virtual-display-windows.md",
+    "problems/geforce-passthrough-needs-a-display.md",
+    "problems/looking-glass-shows-spice-and-calls-it-success.md",
+):
+    text = (root / relative).read_text(encoding="utf-8")
+    if canonical_lg_build not in text:
+        fail(f"{relative}: Looking Glass build identity drift")
+if "sanitized Predator examples" not in (root / "configs/boot/boot-profiles.md").read_text(encoding="utf-8"):
+    fail("boot profile guide must identify checked-in PCI IDs as examples")
+for placeholder in root.rglob(".gitkeep"):
+    if ".git" not in placeholder.parts:
+        fail(f"dead placeholder file remains tracked: {placeholder.relative_to(root)}")
+
 if errors:
     print("REPOSITORY VERIFICATION FAILED", file=sys.stderr)
     for error in errors:

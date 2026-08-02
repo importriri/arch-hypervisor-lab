@@ -14,7 +14,7 @@ problem, and none of them was the one being debugged.
 
 ## Setup
 
-- Host: Arch Linux, sway, Looking Glass client `B7-263-0140a3f6` built from source
+- Host: Arch Linux, sway, Looking Glass client `B7-263-g0140a3f6fb` built from source
 - Guest: Windows 11, RTX 3060 Mobile passed through, host application same build
 - Transport: `/dev/kvmfr0`, 32 MiB, input over SPICE
 

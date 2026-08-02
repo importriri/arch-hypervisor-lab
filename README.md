@@ -16,15 +16,18 @@ NVIDIA dGPU -- VFIO --> one of clean / dirty / dev / lab
 ```
 
 The dGPU is assigned to one workload VM at a time. It is never part of the
-`services` domain. The host remains headless by default; Sway and Looking Glass
-are optional administration components on the iGPU.
+`services` domain. The stage-2 foundation remains headless for recovery, while
+the normal laptop target adds Sway and the Looking Glass host transport on the
+iGPU in that order.
 
 ## Repository set
 
 1. [arch-bootstrap](https://github.com/importriri/arch-bootstrap) installs the
    encrypted base system and optional encrypted VM disk.
 2. [privatestack-ansible](https://github.com/importriri/privatestack-ansible)
-   configures KVM, networking, isolation, boot profiles and GPU hand-off.
+   configures KVM, networking, isolation, boot profiles, GPU hand-off, the
+   local cockpit, Looking Glass host transport and explicit VM/service
+   lifecycle transactions.
 3. This repository records the design, setup order, failures and compatibility
    results.
 
@@ -69,13 +72,20 @@ configs/      boot, network, libvirt and guest configuration examples
 hardware/     compatibility matrix, evidence policy and report template
 problems/     failure investigations and fixes
 scripts/      hardware report collector and repository verifier
-SETUP.md      end-to-end setup and validation order
 ```
+
+The end-to-end command order is maintained in [`SETUP.md`](SETUP.md). Network
+contracts are in [`configs/network-domains.md`](configs/network-domains.md),
+and the four boot modes are indexed in
+[`configs/boot/boot-profiles.md`](configs/boot/boot-profiles.md).
 
 Run the repository checks with:
 
 ```bash
+# Validate relative links, hardware states and checked-in configuration contracts.
 python scripts/verify_repo.py
+
+# Parse the hardware collector without executing it or reading host data.
 bash -n scripts/collect-hardware-report.sh
 ```
 

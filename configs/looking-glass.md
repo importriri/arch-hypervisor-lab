@@ -76,7 +76,8 @@ manual part is written down instead of remembered — which is what
 
 ## Host side
 
-With the ansible brick:
+The normal `playbooks/lab.yml` target already runs these bricks in the required
+order. For focused maintenance only, the equivalent narrow entrypoints are:
 
 ```bash
 ansible-playbook playbooks/desktop.yml      # the Wayland session the client needs

@@ -1,9 +1,13 @@
 # Boot Profiles — Arch Linux
 
-This system has 4 selectable boot profiles in systemd-boot.
-Each profile loads a different set of kernel parameters depending on intended use.
+The managed host has four selectable boot profiles in systemd-boot. Each
+profile loads a different set of kernel parameters depending on intended use.
+The checked-in `.conf` files are sanitized Predator examples; PrivateStack
+renders `vfio-pci.ids` from the selected Nitro or Predator hardware profile at
+runtime and never copies these example IDs into another laptop.
 
-**Vfio and Hardened are the base of the lab. Integrated and Nvidia are optional conveniences** (battery saving and native gaming) — the lab works without them.
+**Vfio and Hardened are the base of the lab. Integrated and Nvidia are optional
+conveniences** (battery saving and native gaming) — the lab works without them.
 
 ```
 ┌──────────────────────────────────────────────────────────────┐

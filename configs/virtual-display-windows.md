@@ -20,7 +20,7 @@ Order matters. Each step is verifiable before the next one starts.
 - The ivshmem device, the SPICE graphics and the virtio input devices are in
   the domain XML — see [`libvirt/looking-glass.xml`](libvirt/looking-glass.xml).
 - You know which Looking Glass build the host side is on. Client and host
-  application must match exactly; here that is `B7-263-0140a3f6`.
+  application must match exactly; here that is `B7-263-g0140a3f6fb`.
 
 ---
 

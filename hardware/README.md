@@ -16,7 +16,8 @@ A profile needs all of the following at pinned commits:
 - five persistent libvirt networks and isolation probes pass;
 - VFIO binds both expected PCI functions;
 - at least one full guest start/shutdown/handoff cycle;
-- Looking Glass checks when that optional component is claimed;
+- host-side Looking Glass convergence and one real shared-memory guest capture
+  cycle (a visible SPICE fallback does not count);
 - sanitized report plus logs/screenshots linked from the profile.
 
 ## Adding a friend's laptop
@@ -27,4 +28,5 @@ Run the full checklist, keep failures as writeups, and use `pipeline-pending`
 until every gate passes.
 
 The collector intentionally excludes serial numbers, MAC addresses and IP
-addresses. Review every report manually before publishing it.
+addresses. Start from [`report-template.md`](report-template.md) and review every
+report manually before publishing it.

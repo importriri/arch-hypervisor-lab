@@ -29,7 +29,7 @@ desktop and appears to work, which is
 
 - Guest: Windows 11, RTX 3060 Mobile passed through, NVIDIA driver installed
   and the card in use
-- Host: Arch Linux, Looking Glass `B7-263-0140a3f6`
+- Host: Arch Linux, Looking Glass `B7-263-g0140a3f6fb`
 - **The laptop's HDMI port is physically broken**, and on this chassis it is the
   only port wired to the dGPU
 
