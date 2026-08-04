@@ -34,7 +34,10 @@ iGPU in that order.
 The known profiles are an Acer Nitro 5 with an RTX 3060 Mobile and an Acer
 Predator Helios 300 with an RTX 3070 Mobile. Individual components have been
 exercised on both machines, but a complete compatibility result is recorded
-only after a clean install and a second idempotent Ansible run. Current status
+only after a clean install and a second idempotent Ansible run. The Nitro
+bootstrap-to-stage-2 host path has been reproduced and the immediate second
+stage-2 apply reported `changed=0`; full compatibility remains pending until
+the frozen clean-install and guest-cycle evidence is complete. Current status
 is in [`hardware/README.md`](hardware/README.md).
 
 ## PCIe power-management freeze

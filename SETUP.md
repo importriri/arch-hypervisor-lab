@@ -40,17 +40,20 @@ cd privatestack-ansible
 # Install the Ansible collections declared by the reviewed checkout.
 ansible-galaxy collection install -r collections/requirements.yml
 
+# Verify the exact checkout before it changes host state.
+./verify.sh
+
 # Detect the Nitro or Predator profile without changing the host.
-ansible-playbook playbooks/preflight.yml
+ansible-playbook -K playbooks/preflight.yml
 
 # Preview the complete laptop target and display the managed diff.
-ansible-playbook playbooks/lab.yml --check --diff
+ansible-playbook -K playbooks/lab.yml --check --diff
 
 # Apply the complete target: foundation, Sway and Looking Glass host transport.
-ansible-playbook playbooks/lab.yml
+ansible-playbook -K playbooks/lab.yml
 
 # Prove immediate idempotence; this pass must report changed=0.
-ansible-playbook playbooks/lab.yml
+ansible-playbook -K playbooks/lab.yml
 ```
 
 The preflight must select exactly one reviewed profile (`nitro-3060` or
@@ -63,7 +66,7 @@ restart it prints:
 
 ```bash
 # Apply the same target while explicitly allowing changed network restarts.
-ansible-playbook playbooks/lab.yml -e network_domains_restart_changed=true
+ansible-playbook -K playbooks/lab.yml -e network_domains_restart_changed=true
 ```
 
 ## 3. Verify the five domains
@@ -91,15 +94,15 @@ handoff documented by PrivateStack.
 
 ```bash
 # Preview acquisition and validation of the pinned official Arch cloud image.
-ansible-playbook playbooks/image-prepare.yml --check --diff \
+ansible-playbook -K playbooks/image-prepare.yml --check --diff \
   -e image_factory_manifest=images/arch.yml
 
 # Acquire, inspect and commit the image transaction.
-ansible-playbook playbooks/image-prepare.yml \
+ansible-playbook -K playbooks/image-prepare.yml \
   -e image_factory_manifest=images/arch.yml
 
 # Revalidate the sealed base without replacing it.
-ansible-playbook playbooks/image-validate.yml \
+ansible-playbook -K playbooks/image-validate.yml \
   -e image_factory_manifest=images/arch.yml
 ```
 
@@ -115,21 +118,21 @@ SSH public key:
 
 ```bash
 # Preview the disposable Arch guest transaction and its complete managed diff.
-ansible-playbook playbooks/vm-create.yml --check --diff \
+ansible-playbook -K playbooks/vm-create.yml --check --diff \
   -e guest_spec=vm-specs/arch-bootstrap-gate.yml \
   -e '{"guest_cloud_init_ssh_public_keys":["ssh-ed25519 AAAA..."]}'
 
 # Create the guest from its sealed base and private runtime identity.
-ansible-playbook playbooks/vm-create.yml \
+ansible-playbook -K playbooks/vm-create.yml \
   -e guest_spec=vm-specs/arch-bootstrap-gate.yml \
   -e '{"guest_cloud_init_ssh_public_keys":["ssh-ed25519 AAAA..."]}'
 
 # Start only after live capacity and ownership checks pass.
-ansible-playbook playbooks/vm-start.yml \
+ansible-playbook -K playbooks/vm-start.yml \
   -e guest_spec=vm-specs/arch-bootstrap-gate.yml
 
 # Request a Guest Agent shutdown and wait for the managed state transition.
-ansible-playbook playbooks/vm-shutdown.yml \
+ansible-playbook -K playbooks/vm-shutdown.yml \
   -e guest_spec=vm-specs/arch-bootstrap-gate.yml
 ```
 
@@ -165,20 +168,20 @@ hypervisor:
 
 ```bash
 # Preview registration and its identity, lease and memory reservations.
-ansible-playbook playbooks/service-register.yml --check --diff \
+ansible-playbook -K playbooks/service-register.yml --check --diff \
   -e service_spec=service-specs/svc-jellyfin.yml
 
 # Commit the reviewed service registration.
-ansible-playbook playbooks/service-register.yml \
+ansible-playbook -K playbooks/service-register.yml \
   -e service_spec=service-specs/svc-jellyfin.yml
 
 # Create the registered service VM with a host-local public key.
-ansible-playbook playbooks/vm-create.yml \
+ansible-playbook -K playbooks/vm-create.yml \
   -e guest_spec=vm-specs/svc-jellyfin.yml \
   -e '{"guest_cloud_init_ssh_public_keys":["ssh-ed25519 AAAA..."]}'
 
 # Configure Jellyfin inside the service guest, never on the hypervisor.
-ansible-playbook playbooks/jellyfin.yml
+ansible-playbook -K playbooks/jellyfin.yml
 ```
 
 Backup and restore stay offline transactions; LAN exposure exists only while a

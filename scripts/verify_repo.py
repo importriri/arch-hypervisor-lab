@@ -52,6 +52,22 @@ for entry in (root / "configs/boot").glob("*.conf"):
 readme = (root / "README.md").read_text(encoding="utf-8")
 setup = (root / "SETUP.md").read_text(encoding="utf-8")
 canonical_lg_build = "B7-263-g0140a3f6fb"
+
+for relative in ("SETUP.md", "configs/looking-glass.md"):
+    text = (root / relative).read_text(encoding="utf-8")
+    for line_number, line in enumerate(text.splitlines(), start=1):
+        command = line.strip()
+        if command.startswith("ansible-playbook ") and not command.startswith(
+            "ansible-playbook -K "
+        ):
+            fail(
+                f"{relative}:{line_number}: ansible-playbook command must use -K"
+            )
+
+if "./verify.sh" not in setup:
+    fail("SETUP must verify the stage-2 checkout before host changes")
+if "The Nitro\nbootstrap-to-stage-2 host path has been reproduced" not in readme:
+    fail("README must record the verified Nitro host path without promoting it")
 if "the normal laptop target adds Sway and the Looking Glass host transport" not in readme:
     fail("README must describe Sway and Looking Glass as part of the normal laptop target")
 if "The `playbooks/lab.yml` run in step 2 already installed Sway" not in setup:

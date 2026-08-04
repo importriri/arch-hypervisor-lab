@@ -80,8 +80,8 @@ The normal `playbooks/lab.yml` target already runs these bricks in the required
 order. For focused maintenance only, the equivalent narrow entrypoints are:
 
 ```bash
-ansible-playbook playbooks/desktop.yml      # the Wayland session the client needs
-ansible-playbook playbooks/looking-glass.yml
+ansible-playbook -K playbooks/desktop.yml      # the Wayland session the client needs
+ansible-playbook -K playbooks/looking-glass.yml
 ```
 
 By hand, the same four things in order:
