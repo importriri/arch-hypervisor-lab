@@ -191,9 +191,15 @@ The software adapter scores single digits; there is no ambiguity in that number.
 
 **One GPU VM at a time, and it must fit in RAM.** A PCI hostdev forces the IOMMU
 to pin the guest's entire memory: no lazy allocation, no swap, ballooning
-ineffective. On an 8 GB bench machine a 7 GB guest is killed by the OOM killer
-before it finishes booting, and the failure is silent — QEMU dies with no error
-of its own. 6000 MiB is the working ceiling here.
+ineffective. The failure is silent when it does not fit: QEMU dies with no error
+of its own and the OOM killer takes the guest before it finishes booting.
+
+This bit hard on the 8 GB Nitro, where a 7 GB guest could not boot and 6000 MiB
+was the working ceiling. That machine now carries 32 GB, so the ceiling is a
+policy number rather than a wall: `max_auto_memory_mb` in the privatestack
+host profile decides it, and pinning still means the whole allocation is real
+memory that nothing else can use while the guest runs. The reasoning is in
+`problems/` and stays true at any RAM size; only the number moved.
 
 **The virtual display costs a little smoothness.** Reports from r/VFIO put a
 software IDD slightly behind a hardware dummy plug on frame drops. It is not
