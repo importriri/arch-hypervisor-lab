@@ -1,9 +1,9 @@
-# The guest half — virtual display and host application, by hand
+# The guest half: virtual display and host application, by hand
 
 > The part that stays manual. Done once, on the image every later VM is cloned
 > from. Written down so it is repeated, not remembered.
 
-Everything here happens inside the Windows guest, through `virt-manager` — not
+Everything here happens inside the Windows guest, through `virt-manager`, not
 through Looking Glass, which cannot work until this is finished. The procedure
 is keyboard-only on purpose: the machine it was written on has no working
 pointer of its own, and a procedure that needs a mouse is a procedure you cannot
@@ -18,7 +18,7 @@ Order matters. Each step is verifiable before the next one starts.
 - The VM boots and Windows sees the passed GPU in Device Manager.
 - The NVIDIA driver is installed **inside the guest** and the card is in use.
 - The ivshmem device, the SPICE graphics and the virtio input devices are in
-  the domain XML — see [`libvirt/looking-glass.xml`](libvirt/looking-glass.xml).
+  the domain XML. See [`libvirt/looking-glass.xml`](libvirt/looking-glass.xml).
 - You know which Looking Glass build the host side is on. Client and host
   application must match exactly; here that is `B7-263-g0140a3f6fb`.
 
@@ -49,7 +49,7 @@ The component list of this build offers exactly four things:
 ```
 
 There is no virtual display component. Looking Glass has its own indirect
-display driver in development upstream, but it does not ship in this installer —
+display driver in development upstream, but it does not ship in this installer,
 which is why step 3 exists at all.
 
 Verify in Device Manager → System devices: **IVSHMEM Device**, no yellow
@@ -67,14 +67,14 @@ An indirect display driver creates a monitor in software and closes that gap.
 Used here: **Virtual Display Driver** ([VirtualDrivers/Virtual-Display-Driver](https://github.com/VirtualDrivers/Virtual-Display-Driver),
 "VDD by MTT"), signed, still maintained. The older
 [roshkins/IddSampleDriver](https://github.com/roshkins/IddSampleDriver) works
-the same way and is self-signed — fine if Secure Boot is off inside the VM,
+the same way and is self-signed, which is fine if Secure Boot is off inside the VM,
 which is a decision about the guest's own firmware, not the host's.
 
 **Install it from the GUI installer on the Releases page.**
 
 > `winget install --id=VirtualDrivers.Virtual-Display-Driver -e` reports success
 > and creates no device. It drops files; it does not install the driver. A
-> reboot after it changes nothing, and Device Manager shows no new adapter — the
+> reboot after it changes nothing, and Device Manager shows no new adapter: the
 > one symptom that tells you which of the two happened.
 
 Then reboot the guest and verify in Device Manager → Display adapters. Three
@@ -87,7 +87,7 @@ Virtual Display Driver                ← the new one
 ```
 
 *(An unrelated yellow triangle on "NVIDIA Platform Controllers and Framework",
-code 31, is normal in a VM — it is a laptop platform driver with no hardware to
+code 31, is normal in a VM. It is a laptop platform driver with no hardware to
 talk to. It has nothing to do with this.)*
 
 ---
@@ -108,7 +108,7 @@ so a mistake is recoverable. Only once Looking Glass is confirmed working:
 Win+P  →  Second screen only  →  Enter
 ```
 
-`virt-manager` goes black at that point. That is correct — you now live inside
+`virt-manager` goes black at that point. That is correct: you now live inside
 Looking Glass. `Win+P` gets you back if you picked the wrong screen.
 
 ---
@@ -129,7 +129,7 @@ Using            : D12
 Max Frame Size   : 14 MiB
 ```
 
-**Not working — no display on the card:**
+**Not working, no display on the card:**
 
 ```
 Not using unsupported adapter: Microsoft Basic Render Driver
@@ -148,7 +148,7 @@ compensate for it.
 This procedure is the reason the guest image is treated as a golden base: once
 Windows is activated, driven and carrying these three drivers, it is frozen and
 every later VM is a copy-on-write overlay on top of it. The Windows blob is not
-reproducible from source, so it is reproduced from an image — and this page is
+reproducible from source, so it is reproduced from an image, and this page is
 what makes that image rebuildable if it is ever lost.
 
 ---
@@ -157,9 +157,9 @@ what makes that image rebuildable if it is ever lost.
 
 | What you see | What it means |
 |---|---|
-| Host log: `Failed to locate a valid output device` | no display on the passed GPU — step 3 |
-| Host log stops at IVSHMEM | the shared memory device is not bound — step 2 |
+| Host log: `Failed to locate a valid output device` | no display on the passed GPU, step 3 |
+| Host log stops at IVSHMEM | the shared memory device is not bound, step 2 |
 | Client log: `The host application seems to not be running` | the guest side never published a frame; read the guest log, not the host one |
-| Client shows a desktop but the log says the host is not running | SPICE fallback — [the writeup](../problems/looking-glass-shows-spice-and-calls-it-success.md) |
-| Keyboard works, mouse does not | vioinput missing — step 1 |
-| Resolution flapping, capture restarting in a loop | two active displays fighting — finish step 4 |
+| Client shows a desktop but the log says the host is not running | SPICE fallback, [the writeup](../problems/looking-glass-shows-spice-and-calls-it-success.md) |
+| Keyboard works, mouse does not | vioinput missing, step 1 |
+| Resolution flapping, capture restarting in a loop | two active displays fighting, finish step 4 |

@@ -1,17 +1,17 @@
-# Looking Glass — the window onto the GPU VM
+# Looking Glass: the window onto the GPU VM
 
 > Design contract. What is automated, what is manual, and why the line falls
 > where it does. Verified on the bench machine; the numbers below are real.
 
-The passthrough VM owns the dGPU. The host has no cable to it — on this laptop
+The passthrough VM owns the dGPU. The host has no cable to it: on this laptop
 the only port wired to the dGPU is a broken HDMI. Looking Glass closes that gap:
 the guest writes finished frames into a block of shared memory, the host reads
 them out of the same block and draws them in a window. No encode, no network,
-no compression — the frame you see is the frame the guest rendered.
+no compression. The frame you see is the frame the guest rendered.
 
 That last point matters when judging quality: **Looking Glass carries raw
 frames, SPICE compresses**. At equal resolution Looking Glass cannot look worse
-than SPICE. If it does, you are not looking at Looking Glass — see
+than SPICE. If it does, you are not looking at Looking Glass. See
 [`problems/looking-glass-shows-spice-and-calls-it-success.md`](../problems/looking-glass-shows-spice-and-calls-it-success.md).
 
 ---
@@ -32,17 +32,17 @@ than SPICE. If it does, you are not looking at Looking Glass — see
               └──────────► /dev/kvmfr0 (ivshmem) ─────────┘
                            one buffer, two sides
 
-   keyboard + mouse travel the other way, over SPICE — never over kvmfr
+   keyboard + mouse travel the other way, over SPICE, never over kvmfr
 ```
 
 Three things must be true at once, and each one fails differently:
 
 1. **The shared memory exists and both ends can open it.** QEMU opens the node
    as a memory backend; the client mmaps it from the desktop session. Two
-   different users, one node —
+   different users, one node:
    [`problems/kvmfr-device-permissions.md`](../problems/kvmfr-device-permissions.md).
 2. **The guest has something to capture.** A GPU with no display attached has no
-   output, and the host application exits in under a tenth of a second —
+   output, and the host application exits in under a tenth of a second:
    [`problems/geforce-passthrough-needs-a-display.md`](../problems/geforce-passthrough-needs-a-display.md).
 3. **Client and host application are the same build.** They do not negotiate.
    Mismatched builds leave the client waiting forever, which looks exactly like
@@ -62,14 +62,14 @@ Three things must be true at once, and each one fails differently:
 | virtio drivers, host application, virtual display **inside Windows** | [`virtual-display-windows.md`](virtual-display-windows.md) | manual, by design |
 
 The line is not laziness. Everything on the host side is a package, a file, or a
-build from a pinned commit — all of it declarative and testable, so all of it is
+build from a pinned commit, all of it declarative and testable, so all of it is
 a brick. Everything inside the Windows guest is a signed binary installed by a
 GUI. Automating that would mean driving an installer over WinRM: more moving
 parts than the manual procedure it replaces, and unverifiable in CI.
 
 So the guest half is done **once**, by hand, on the image that every later VM is
 cloned from. Reproducibility is preserved where it can be checked, and the
-manual part is written down instead of remembered — which is what
+manual part is written down instead of remembered, which is what
 [`virtual-display-windows.md`](virtual-display-windows.md) is for.
 
 ---
@@ -87,7 +87,7 @@ ansible-playbook -K playbooks/looking-glass.yml
 By hand, the same four things in order:
 
 **1. The kvmfr module.** Built out of the Looking Glass source tree with DKMS,
-against the headers of the running kernel (`linux-hardened-headers` here — not
+against the headers of the running kernel (`linux-hardened-headers` here, not
 `linux-headers`, that is a different kernel).
 
 **2. Its size.** The shared block must hold two frames plus headroom:
@@ -119,7 +119,7 @@ SUBSYSTEM=="kvmfr", OWNER="libvirt-qemu", GROUP="kvm", MODE="0660", TAG+="uacces
 
 ```bash
 udevadm control --reload
-udevadm trigger --subsystem-match=kvmfr --action=change   # not optional — see the writeup
+udevadm trigger --subsystem-match=kvmfr --action=change   # not optional, see the writeup
 ```
 
 **4. The client**, built from the same commit as the Windows host application:
@@ -155,7 +155,7 @@ The pinned B7 client also expects INI comments to begin with `;`, not `#`. See
 
 ## Verification protocol
 
-Three lines decide whether this works. Nothing else counts — not what the
+Three lines decide whether this works. Nothing else counts: not what the
 window shows, not whether the mouse moves.
 
 **In the guest**, `%ProgramData%\Looking Glass (host)\looking-glass-host.txt`:
@@ -180,7 +180,7 @@ Using DMA buffer support                         ← going through kvmfr, not a 
 While that first line is present, whatever the window shows is the SPICE
 fallback surface, and every conclusion drawn from it is wrong.
 
-**Proof the GPU is actually rendering** — not the software rasteriser — is a
+**Proof the GPU is actually rendering**, not the software rasteriser, is a
 3D benchmark inside the VM. On the bench: Unigine Valley, Extreme HD preset,
 8×AA, 1920×1080, **46.8 FPS average** (min 18.7, max 65.5), GPU at 2100 MHz.
 The software adapter scores single digits; there is no ambiguity in that number.
@@ -205,7 +205,7 @@ memory that nothing else can use while the guest runs. The reasoning is in
 software IDD slightly behind a hardware dummy plug on frame drops. It is not
 visible at desktop and CAD workloads; it may be under a twitch shooter. Where a
 port wired to the dGPU exists and works, a dummy plug is still the better
-transport — this machine does not have that option.
+transport. This machine does not have that option.
 
 **Heat is the real ceiling.** 86 °C at load on the bench, which is where the
 card starts throttling and where that 18.7 minimum comes from. The lever for
@@ -222,8 +222,8 @@ output. Only the display section of the panel is affected; 3D settings are not.
 Everything above is card-agnostic except one thing: whether your laptop wires a
 usable port to the dGPU. If it does, a dummy plug replaces the whole virtual
 display procedure and the guest half shrinks to installing the host
-application. If it does not — broken port, or a muxless design that never
-exposes one — the virtual display is not a workaround, it is the only path.
+application. If it does not (broken port, or a muxless design that never
+exposes one) the virtual display is not a workaround, it is the only path.
 
 Check before assuming: on the bench, NVIDIA's own panel reports zero displays on
 the card, and that is the honest state of the hardware.

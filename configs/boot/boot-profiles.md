@@ -1,4 +1,4 @@
-# Boot Profiles — Arch Linux
+# Boot Profiles: Arch Linux
 
 The managed host has four selectable boot profiles in systemd-boot. Each
 profile loads a different set of kernel parameters depending on intended use.
@@ -7,7 +7,7 @@ renders `vfio-pci.ids` from the selected Nitro or Predator hardware profile at
 runtime and never copies these example IDs into another laptop.
 
 **Vfio and Hardened are the base of the lab. Integrated and Nvidia are optional
-conveniences** (battery saving and native gaming) — the lab works without them.
+conveniences** (battery saving and native gaming). The lab works without them.
 
 ```
 ┌──────────────────────────────────────────────────────────────┐
@@ -30,8 +30,8 @@ Use: native Linux gaming, rendering, Blender.
 
 ## Arch Linux (Vfio) ← main profile for this repo
 Blocks the open-source nouveau driver so vfio-pci can claim the card at boot.
-The GPU is NOT usable on the host — reserved exclusively for VMs.
-Runs on `linux-hardened` — the same kernel the final hypervisor host uses.
+The GPU is NOT usable on the host: reserved exclusively for VMs.
+Runs on `linux-hardened`, the same kernel the final hypervisor host uses.
 
 Key parameters:
 - `vfio-pci.ids=10de:249d,10de:228b` — PCI IDs of RTX 3070 + HDMI audio
