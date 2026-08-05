@@ -20,6 +20,25 @@ A profile needs all of the following at pinned commits:
   cycle (a visible SPICE fallback does not count);
 - sanitized report plus logs/screenshots linked from the profile.
 
+## Keeping the two files in step
+
+`compatibility.yml` records the IDs that were observed. `privatestack-ansible`
+carries the IDs it binds. They used to be able to drift apart for months, so
+`tests/cross_repo_contract.py` over there now compares them:
+
+```bash
+cd ../privatestack-ansible
+python tests/cross_repo_contract.py ../arch-hypervisor-lab
+```
+
+Without a checkout of this repository it skips and says so rather than
+reporting a pass. The CI job that exists to compare the pair checks out both
+and is not allowed to skip.
+
+The status columns above live here and nowhere else. A repository cannot
+certify itself, which is why the ansible profile carries no status field and
+the check refuses one that reappears.
+
 ## Adding a friend's laptop
 
 Create a candidate profile only after collecting numeric PCI IDs and IOMMU
