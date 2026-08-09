@@ -133,7 +133,7 @@ in the same file.
 ## Now automated
 
 This is a brick:
-[`privatestack-ansible` → `roles/looking_glass`](https://github.com/importriri/privatestack-ansible).
+[`hyperlab-ansible` → `roles/looking_glass`](https://github.com/importriri/hyperlab-ansible).
 The rule is a template, the retrigger is a handler, and two of the repo's
 invariant tests exist specifically so this cannot silently regress: one asserts
 that both openers are named in the rendered rule, the other that

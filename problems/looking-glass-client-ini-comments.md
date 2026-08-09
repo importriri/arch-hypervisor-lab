@@ -12,7 +12,7 @@ Syntax error on line 1, module not specified for option
 The first line looks harmless:
 
 ```ini
-# Managed by privatestack-ansible
+# Managed by hyperlab-ansible
 ```
 
 ## Root cause
@@ -27,7 +27,7 @@ comment marker.
 Use semicolons in the generated file:
 
 ```ini
-; Managed by privatestack-ansible
+; Managed by hyperlab-ansible
 
 [app]
 shmFile=/dev/kvmfr0

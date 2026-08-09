@@ -1,164 +1,169 @@
-# Reproduce and validate the pipeline
+# Nitro setup guide
 
-This is a three-stage system. Run each stage at a pinned commit and keep the
-logs together; a compatibility claim without commit IDs is not reproducible.
+This is the short path through the three repositories. The detailed failure and
+release notes stay in their owning repository.
 
 ```text
-arch-bootstrap ──> privatestack-ansible ──> arch-hypervisor-lab evidence
-base OS            host + VM transactions   architecture + compatibility
+Arch ISO
+  -> arch-bootstrap
+  -> hyperlab-ansible
+  -> images and explicit workloads
+  -> VFIO / Looking Glass
+  -> hardware evidence here
 ```
 
-## 0. Record the candidate
+Use pinned commits for a release run. Keep the three commit IDs with the final
+evidence.
 
-Before touching a laptop, record the commit of all three repositories and the
-intended hardware profile. Back up the machine and verify that the backup can
-be read.
+## 1. Install the base host
 
-## 1. Install the encrypted base
-
-Follow `arch-bootstrap/docs/release-gates.md`:
-
-1. run its local verification;
-2. run the default dry-run;
-3. perform the clean install;
-4. complete Secure Boot enrollment manually;
-5. boot the Hardened entry twice and verify mounts/networking.
-
-The optional second disk is a separate LUKS2 container mounted at
-`/var/lib/libvirt/images`. Its No_COW contract is established with `chattr +C`
-while empty, not with a misleading per-subvolume mount option.
-
-## 2. Detect the laptop and assemble the host
+From the Arch installer environment, clone the stage-1 repository and run its
+checks before touching disk state:
 
 ```bash
-# Fetch the published stage-2 automation from main.
-git clone https://github.com/importriri/privatestack-ansible.git
+git clone https://github.com/importriri/arch-bootstrap.git
+cd arch-bootstrap
+sudo bash verify.sh
+sudo bash bootstrap
+```
 
-# Enter the repository so every relative contract path resolves correctly.
-cd privatestack-ansible
+`bootstrap` is dry-run by default. Review the selected disks and printed plan.
+Only then run the real installation:
 
-# Install the Ansible collections declared by the reviewed checkout.
+```bash
+sudo env DRY_RUN=0 bash bootstrap
+```
+
+The result is an encrypted Arch host with the stage-2 storage contract already
+written. Complete Secure Boot enrollment and first-boot networking exactly as
+described by `arch-bootstrap` before continuing.
+
+## 2. Build the Nitro host
+
+```bash
+git clone https://github.com/importriri/hyperlab-ansible.git
+cd hyperlab-ansible
 ansible-galaxy collection install -r collections/requirements.yml
-
-# Verify the exact checkout before it changes host state.
 ./verify.sh
-
-# Detect the Nitro or Predator profile without changing the host.
 ansible-playbook -K playbooks/preflight.yml
-
-# Preview the complete laptop target and display the managed diff.
 ansible-playbook -K playbooks/lab.yml --check --diff
-
-# Apply the complete target: foundation, Sway and Looking Glass host transport.
 ansible-playbook -K playbooks/lab.yml
-
-# Prove immediate idempotence; this pass must report changed=0.
 ansible-playbook -K playbooks/lab.yml
 ```
 
-The preflight must select exactly one reviewed profile (`nitro-3060` or
-`predator-3070`) and validate both the GPU and its HDMI-audio function. The
-second real run must report `changed=0`.
-
-Existing active libvirt networks are not silently replaced. When the role finds
-persistent XML drift, stop attached guests and opt into the maintenance-window
-restart it prints:
-
-```bash
-# Apply the same target while explicitly allowing changed network restarts.
-ansible-playbook -K playbooks/lab.yml -e network_domains_restart_changed=true
-```
-
-## 3. Verify the five domains
-
-The expected persistent networks are:
-
-| Domain | Bridge | Subnet | Forwarding |
-|---|---|---|---|
-| clean | `virbr-clean` | `10.10.1.0/24` | NAT |
-| dirty | `virbr-dirty` | `10.10.2.0/24` | NAT |
-| dev | `virbr-dev` | `10.10.3.0/24` | NAT |
-| lab | `virbr-lab` | `10.10.4.0/24` | none |
-| services | `virbr-services` | `10.10.5.0/24` | NAT |
-
-Verify persistent XML with `virsh net-dumpxml --inactive NAME`, not only the
-currently active bridge. Test that guests cannot cross bridges, that the lab
-cannot reach the internet, and that services are reachable only through
-explicitly documented exposure rules.
-
-## 4. Prepare and seal images
-
-Images are explicit transactions. Public cloud bytes require a pinned vendor
-checksum; Windows and installer-only distributions use the private workshop
-handoff documented by PrivateStack.
-
-```bash
-# Preview acquisition and validation of the pinned official Arch cloud image.
-ansible-playbook -K playbooks/image-prepare.yml --check --diff \
-  -e image_factory_manifest=images/arch.yml
-
-# Acquire, inspect and commit the image transaction.
-ansible-playbook -K playbooks/image-prepare.yml \
-  -e image_factory_manifest=images/arch.yml
-
-# Revalidate the sealed base without replacing it.
-ansible-playbook -K playbooks/image-validate.yml \
-  -e image_factory_manifest=images/arch.yml
-```
-
-Do not put image files, Windows accounts, signed guest installers or private
-workshop receipts in Git.
-
-## 5. Exercise explicit VM lifecycle
-
-`lab.yml` never creates or destroys workloads. Use one checked-in spec and keep
-create, start, shutdown, reset and destroy as separate reviewed transactions.
-For a cloud-init Linux guest, creation also needs at least one safe host-local
-SSH public key:
-
-```bash
-# Preview the disposable Arch guest transaction and its complete managed diff.
-ansible-playbook -K playbooks/vm-create.yml --check --diff \
-  -e guest_spec=vm-specs/arch-bootstrap-gate.yml \
-  -e '{"guest_cloud_init_ssh_public_keys":["ssh-ed25519 AAAA..."]}'
-
-# Create the guest from its sealed base and private runtime identity.
-ansible-playbook -K playbooks/vm-create.yml \
-  -e guest_spec=vm-specs/arch-bootstrap-gate.yml \
-  -e '{"guest_cloud_init_ssh_public_keys":["ssh-ed25519 AAAA..."]}'
-
-# Start only after live capacity and ownership checks pass.
-ansible-playbook -K playbooks/vm-start.yml \
-  -e guest_spec=vm-specs/arch-bootstrap-gate.yml
-
-# Request a Guest Agent shutdown and wait for the managed state transition.
-ansible-playbook -K playbooks/vm-shutdown.yml \
-  -e guest_spec=vm-specs/arch-bootstrap-gate.yml
-```
-
-Forced stop, reset and destroy require the exact confirmation printed by their
-check-mode refusal. Permanent and disposable specs use the same lifecycle
-engine; disposable means a named resettable overlay, not a one-session VM.
-
-## 6. Validate VFIO and GPU handoff
-
-Boot the managed VFIO entry and verify that the selected profile's two PCI IDs
-are bound to `vfio-pci`. Start one GPU VM at a time. A transition from lower to
-higher trust requires a host reboot; `services` never participates in GPU
-rotation.
-
-## 7. Validate the integrated cockpit
+`preflight.yml` must select `nitro-3060`. The last real apply must report
+`changed=0`.
 
 The `playbooks/lab.yml` run in step 2 already installed Sway, then the host-side
 Looking Glass transport. `playbooks/desktop.yml` and
 `playbooks/looking-glass.yml` are narrow maintenance entrypoints, not extra
-installation steps. The libvirt SPICE endpoint for the Looking Glass guest
-must be fixed at `127.0.0.1:5900`, matching the client configuration.
-`autoport='yes'` is not a valid contract when the client is pinned to port 5900.
+installation steps. The complete target owns the headless foundation and local
+cockpit; it does not create private workloads.
 
-The Windows Looking Glass host and virtual display remain manual. Use the log
-assertions in `configs/looking-glass.md`; a visible SPICE fallback is not proof
-that shared-memory capture works.
+## 3. Check the trust domains
+
+The persistent networks are:
+
+| Domain | Subnet | Forwarding |
+| --- | --- | --- |
+| clean | `10.10.1.0/24` | NAT |
+| dirty | `10.10.2.0/24` | NAT |
+| dev | `10.10.3.0/24` | NAT |
+| lab | `10.10.4.0/24` | none |
+| services | `10.10.5.0/24` | NAT |
+
+The isolated lab must have no internet route. Cross-domain forwarding stays
+blocked unless a reviewed service exposure says otherwise.
+
+## 4. Prepare and seal images
+
+Public images use `images/*.yml` manifests with pinned provenance. Windows and
+installer-only distributions use the workshop path instead of committing private
+media to Git.
+
+For the Arch base:
+
+```bash
+ansible-playbook -K playbooks/image-prepare.yml --check --diff \
+  -e image_factory_manifest=images/arch.yml
+ansible-playbook -K playbooks/image-prepare.yml \
+  -e image_factory_manifest=images/arch.yml
+ansible-playbook -K playbooks/image-validate.yml \
+  -e image_factory_manifest=images/arch.yml
+```
+
+For Windows, follow `hyperlab-ansible/docs/windows-image-workshop.md`. Keep the
+Windows media, accounts, signed guest binaries and workshop receipts local.
+
+## 5. Exercise explicit VM lifecycle
+
+Use the checked-in VM spec that matches the workload. Creation, start, shutdown,
+reset and destruction remain separate transactions. A rerun of the host target
+must never imply a workload decision.
+
+For a standard Arch guest, preview, creation, start and shutdown remain distinct:
+
+```bash
+ansible-playbook -K playbooks/vm-create.yml --check --diff \
+  -e guest_spec=vm-specs/arch-dev.yml \
+  -e '{"guest_cloud_init_ssh_public_keys":["ssh-ed25519 AAAA..."]}'
+ansible-playbook -K playbooks/vm-create.yml \
+  -e guest_spec=vm-specs/arch-dev.yml \
+  -e '{"guest_cloud_init_ssh_public_keys":["ssh-ed25519 AAAA..."]}'
+ansible-playbook -K playbooks/vm-start.yml \
+  -e guest_spec=vm-specs/arch-dev.yml
+ansible-playbook -K playbooks/vm-shutdown.yml \
+  -e guest_spec=vm-specs/arch-dev.yml
+```
+
+Forced stop, reset and destroy require the exact confirmation printed by their
+check-mode refusal.
+
+The reference Nitro set is:
+
+- `win11clean-valley`: trusted Windows/VFIO baseline;
+- `arch-dev`: standard Arch development/recovery workstation;
+- `arch-dev-vfio`: accelerated Arch candidate;
+- `win11dirty-disposable`: lower-trust disposable Windows/VFIO workload;
+- service VMs registered under `service-specs/`, with Jellyfin as the reference
+  service.
+
+For Windows, build and seal the clean master first, then derive workload variants
+from that reviewed base rather than reinstalling Windows for each VM. The exact
+workshop boundary is in `hyperlab-ansible/docs/windows-image-workshop.md`.
+
+For `arch-dev-vfio`, follow
+`hyperlab-ansible/docs/nitro-arch-dev-vfio-campaign.md`; its resource profile,
+SSH key input and hardware gates are intentionally more specific than a generic
+VM-create example.
+
+## 6. Use the dGPU through VFIO
+
+Boot the managed VFIO host entry. The RTX 3060 display and HDMI-audio functions
+must both be bound to `vfio-pci` before a GPU workload starts. Only one workload
+VM owns the dGPU at a time. `services` never receives it.
+
+A move from a lower-trust GPU workload to a higher-trust one requires the host
+reboot defined by the GPU handoff policy.
+
+## 7. Looking Glass
+
+### Windows guests
+
+Install the signed Looking Glass host application and the reviewed virtual
+display inside Windows. These are guest-side manual steps. The physical Arch host
+uses the kvmfr transport configured by `hyperlab-ansible`.
+
+Do not treat a visible SPICE desktop as proof of Looking Glass shared-memory
+capture. Keep SPICE for recovery/input plumbing and verify the actual client and
+kvmfr path.
+
+### Linux VFIO guest
+
+The experimental Linux sender is manual. Nitro has already produced real
+1920×1080 frames through Hyprland, XDPH/PipeWire, kvmfr and the physical-host
+Looking Glass client. Fresh-session persistence, deterministic portal source
+selection and keyboard/pointer return still need their final gates.
 
 ## 8. Register services before creation
 
@@ -167,41 +172,60 @@ created. Application installation runs inside the service guest, not on the
 hypervisor:
 
 ```bash
-# Preview registration and its identity, lease and memory reservations.
 ansible-playbook -K playbooks/service-register.yml --check --diff \
   -e service_spec=service-specs/svc-jellyfin.yml
-
-# Commit the reviewed service registration.
 ansible-playbook -K playbooks/service-register.yml \
   -e service_spec=service-specs/svc-jellyfin.yml
-
-# Create the registered service VM with a host-local public key.
+ansible-playbook -K playbooks/vm-create.yml --check --diff \
+  -e guest_spec=vm-specs/svc-jellyfin.yml \
+  -e '{"guest_cloud_init_ssh_public_keys":["ssh-ed25519 AAAA..."]}'
 ansible-playbook -K playbooks/vm-create.yml \
   -e guest_spec=vm-specs/svc-jellyfin.yml \
   -e '{"guest_cloud_init_ssh_public_keys":["ssh-ed25519 AAAA..."]}'
-
-# Configure Jellyfin inside the service guest, never on the hypervisor.
+ansible-playbook -K playbooks/jellyfin.yml --check --diff
 ansible-playbook -K playbooks/jellyfin.yml
 ```
 
-Backup and restore stay offline transactions; LAN exposure exists only while a
-matching registered service VM is active.
+Backup and restore remain offline transactions. LAN exposure exists only while
+the matching registered service VM is active.
 
-## 9. Produce compatibility evidence
+## 9. Prove the result
 
-From this repository:
+Run the repository verifiers again and collect a sanitized hardware report from
+this repository:
 
 ```bash
-# Collect a sanitized Nitro report; change only the reviewed profile and date.
 sudo scripts/collect-hardware-report.sh hardware/reports/nitro-3060-YYYYMMDD.md
-
-# Validate documentation links, configuration examples and compatibility states.
 python scripts/verify_repo.py
 ```
 
-Review the report before publishing. The script intentionally excludes serial
-numbers, MAC addresses and IP addresses. Complete
-[`hardware/report-template.md`](hardware/report-template.md), link reviewed
-logs, screenshots and writeups, and only then change `full_pipeline` from
-`pipeline-pending` to `pipeline-verified` in
-`hardware/compatibility.yml`.
+Review every report before publishing it. Serial numbers, MAC addresses, private
+IP data, credentials, image contents and account details do not belong in the
+public evidence.
+
+A Nitro release is complete only when the recorded commit IDs, second-pass
+idempotence and named hardware gates agree.
+
+## What counts as a ready Nitro lab
+
+Before calling the machine ready, require all of these:
+
+- `preflight.yml` selects `nitro-3060`;
+- the host target converges twice and the second apply reports `changed=0`;
+- all five libvirt trust domains exist with `lab` isolated;
+- the dGPU is owned by `vfio-pci` before a GPU workload starts;
+- at least one standard guest and the declared VFIO workload path pass their
+  lifecycle gates;
+- Looking Glass is proven through its actual kvmfr path rather than a plausible
+  recovery display;
+- the final evidence names the exact repository commits used on hardware.
+
+Open Linux sender persistence/input items remain release blockers until their
+runbook gates are closed; the guide does not silently promote them to complete.
+
+## Predator
+
+Predator uses the same pipeline, not a separate set of instructions. Its profile
+is `predator-3070`. Run it only after the Nitro release candidate is frozen, and
+use the exact same three repository commits. Differences that require code
+changes reopen Nitro before the Predator result can be published.

@@ -23,8 +23,8 @@ No terminal output, nothing in `journalctl`, no way to read what went wrong.
 
 Laptop GPU passthrough documentation exists but is scattered across forums and
 rarely covers Optimus hybrid setups in depth. The specific `pcie_port_pm=off` fix
-was not found in any guide at the time — no AI tools were available either.
-The solution came from months of systematic trial and error on r/VFIO and Level1Techs.
+was not found in any guide at the time. The solution came from months of
+systematic trial and error on r/VFIO and Level1Techs.
 
 ## Root cause
 
@@ -35,8 +35,8 @@ correctly, the PCI bus stalls, and the entire system freezes.
 
 ## Time spent
 
-~2 months. No AI tools available at the time. Documentation for this specific
-combination (laptop + Optimus + VFIO + this firmware behavior) was not found anywhere.
+~2 months. Documentation for this specific combination (laptop + Optimus + VFIO
++ this firmware behavior) was not found anywhere.
 
 ## Solution
 
@@ -111,9 +111,9 @@ an immediate total freeze when starting a VFIO passthrough VM:
 
 ## Related reports (found later)
 
-When this fix was isolated (no guides, no AI tools — see above), none of the
-reports below existed yet. Since then the same power-management family has
-started surfacing on desktops, where it announces itself in `dmesg` as
+When this fix was isolated, none of the reports below existed yet. Since then
+the same power-management family has started surfacing on desktops, where it
+announces itself in `dmesg` as
 `Unable to change power state from D3cold to D0` before failing:
 
 - [Arch BBS — NVIDIA GPU passthrough freezes on host startup](https://bbs.archlinux.org/viewtopic.php?id=286946)

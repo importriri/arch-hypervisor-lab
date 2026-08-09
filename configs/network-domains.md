@@ -1,7 +1,7 @@
 # Network architecture: five security domains
 
 The source of truth consumed by automation is
-`privatestack-ansible/group_vars/all/networks.yml`. This document explains the
+`hyperlab-ansible/group_vars/all/networks.yml`. This document explains the
 security meaning of those values.
 
 ```text

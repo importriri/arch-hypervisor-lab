@@ -11,7 +11,7 @@ A profile needs all of the following at pinned commits:
 - clean `arch-bootstrap` install and two successful boots;
 - Secure Boot state recorded;
 - correct root and optional VM-disk mounts;
-- `privatestack-ansible` preflight selects the expected profile;
+- `hyperlab-ansible` preflight selects the expected profile;
 - first lab run succeeds and immediate second run reports `changed=0`;
 - five persistent libvirt networks and isolation probes pass;
 - VFIO binds both expected PCI functions;
@@ -22,12 +22,12 @@ A profile needs all of the following at pinned commits:
 
 ## Keeping the two files in step
 
-`compatibility.yml` records the IDs that were observed. `privatestack-ansible`
+`compatibility.yml` records the IDs that were observed. `hyperlab-ansible`
 carries the IDs it binds. They used to be able to drift apart for months, so
 `tests/cross_repo_contract.py` over there now compares them:
 
 ```bash
-cd ../privatestack-ansible
+cd ../hyperlab-ansible
 python tests/cross_repo_contract.py ../arch-hypervisor-lab
 ```
 

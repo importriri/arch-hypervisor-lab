@@ -7,7 +7,7 @@
 - BIOS/UEFI version (no serial):
 - Kernel:
 - arch-bootstrap commit:
-- privatestack-ansible commit:
+- hyperlab-ansible commit:
 - arch-hypervisor-lab commit:
 
 ## Release gates
