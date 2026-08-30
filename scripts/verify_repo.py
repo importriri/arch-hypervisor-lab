@@ -39,8 +39,19 @@ for name in ("clean", "dirty", "dev", "lab", "services"):
         fail(f"network document missing {name}")
 
 lg_xml = (root / "configs/libvirt/looking-glass.xml").read_text()
-if not re.search(r"<graphics\s+type=['\"]spice['\"][^>]*port=['\"]5900['\"][^>]*autoport=['\"]no['\"][^>]*listen=['\"]127\.0\.0\.1['\"]", lg_xml):
-    fail("Looking Glass SPICE endpoint must be fixed at 127.0.0.1:5900")
+if not re.search(
+    r"<graphics\s+type=['\"]spice['\"][^>]*>\s*"
+    r"<listen\s+type=['\"]socket['\"]\s+"
+    r"socket=['\"]/run/hyperlab-spice/DOMAIN\.sock['\"]\s*/>\s*"
+    r"</graphics>",
+    lg_xml,
+    re.DOTALL,
+):
+    fail("Looking Glass VFIO SPICE example must use the reviewed per-domain Unix socket")
+if "size':67108864" not in lg_xml:
+    fail("Looking Glass VFIO example must use the reviewed 64 MiB kvmfr region")
+if re.search(r"<graphics\s+type=['\"]spice['\"][^>]*port=['\"]5900['\"]", lg_xml):
+    fail("Looking Glass VFIO example must not restore TCP port authority")
 
 for entry in (root / "configs/boot").glob("*.conf"):
     text = entry.read_text()

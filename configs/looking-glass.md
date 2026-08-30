@@ -16,7 +16,10 @@ Current Nitro contract:
 - target frame: 1920×1080;
 - host kvmfr shared region: 64 MiB;
 - device: `/dev/kvmfr0`;
-- SPICE endpoint used by the client: `127.0.0.1:5900`.
+- VFIO SPICE input/recovery: a private per-domain UNIX socket under
+  `/run/hyperlab-spice/<domain>.sock`;
+- static client fallback defaults: `127.0.0.1:5900` (not the VFIO transport
+  authority).
 
 The role calculates the shared-memory size from the declared frame dimensions and
 selects the next supported allocation bucket. The 64 MiB value is therefore

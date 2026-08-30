@@ -4,8 +4,9 @@
   Not a complete domain: these are the pieces you add to one that already
   boots with its GPU. Full context in ../looking-glass.md.
 
-  The size below (33554432 = 32 MiB) must equal static_size_mb in
-  /etc/modprobe.d/kvmfr.conf on the host. One buffer, two sides.
+  The size below (67108864 = 64 MiB) matches the current reviewed host
+  shared-memory bucket. The authoritative value lives in hyperlab-ansible;
+  this file is a sanitized configuration example, not a second policy source.
 -->
 
 <!--
@@ -28,7 +29,7 @@
   <qemu:arg value="-device"/>
   <qemu:arg value="{'driver':'ivshmem-plain','id':'shmem0','memdev':'looking-glass'}"/>
   <qemu:arg value="-object"/>
-  <qemu:arg value="{'qom-type':'memory-backend-file','id':'looking-glass','mem-path':'/dev/kvmfr0','size':33554432,'share':true}"/>
+  <qemu:arg value="{'qom-type':'memory-backend-file','id':'looking-glass','mem-path':'/dev/kvmfr0','size':67108864,'share':true}"/>
 </qemu:commandline>
 
 <!--
@@ -38,7 +39,7 @@
 
       <shmem name='looking-glass'>
         <model type='ivshmem-plain'/>
-        <size unit='M'>32</size>
+        <size unit='M'>64</size>
       </shmem>
 
       It also needs the file to exist with the right owner at boot:
@@ -50,8 +51,9 @@
   3. Inside <devices>: input and the display server for it.
 
      Looking Glass carries the picture; SPICE carries keyboard and mouse.
-     The client contract is 127.0.0.1:5900, so the domain must use that fixed
-     port. autoport=yes can select another port and silently break input.
+     VFIO domains use a private per-domain UNIX socket under
+     /run/hyperlab-spice. The canonical launcher resolves that live socket;
+     the static 127.0.0.1:5900 client values are fallback defaults only.
      The tablet is removed on purpose — an absolute pointer and a captured
      relative one fight over the cursor. Without vioinput installed in the
      guest the mouse is dead while the keyboard still works through the
@@ -61,7 +63,9 @@
   <input type='mouse' bus='virtio'/>
   <input type='keyboard' bus='virtio'/>
 
-  <graphics type='spice' port='5900' autoport='no' listen='127.0.0.1'/>
+  <graphics type='spice'>
+    <listen type='socket' socket='/run/hyperlab-spice/DOMAIN.sock'/>
+  </graphics>
 
   <!--
     Keep the emulated display until Looking Glass is verified: it is what

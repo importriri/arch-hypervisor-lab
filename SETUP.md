@@ -12,8 +12,10 @@ Arch ISO
   -> hardware evidence here
 ```
 
-Use pinned commits for a release run. Keep the three commit IDs with the final
-evidence.
+Use pinned commits for a release run. Freeze `arch-bootstrap` and
+`hyperlab-ansible` as the two automation inputs. Record the
+`arch-hypervisor-lab` commit that publishes each sanitized report, but do not
+treat that evidence-repository commit as a hardware input identity.
 
 ## 1. Install the base host
 
@@ -227,5 +229,7 @@ runbook gates are closed; the guide does not silently promote them to complete.
 
 Predator uses the same pipeline, not a separate set of instructions. Its profile
 is `predator-3070`. Run it only after the Nitro release candidate is frozen, and
-use the exact same three repository commits. Differences that require code
-changes reopen Nitro before the Predator result can be published.
+reuse the exact same `arch-bootstrap` and `hyperlab-ansible` commits. The
+evidence repository may advance only by adding reviewed Nitro evidence before
+the Predator report. Differences that require automation changes reopen Nitro
+before the Predator result can be published.
