@@ -74,7 +74,9 @@ Looking Glass display requirements and configuration parsing failures.
 - `hardware/`: compatibility policy, reports and evidence templates;
 - `problems/`: failure investigations;
 - `scripts/`: sanitized hardware collection and repository checks;
-- `SETUP.md`: operator path from a clean machine to the lab.
+- `SETUP.md`: operator path from a clean machine to the lab;
+- [`THIRD-PARTY-LICENCES.md`](THIRD-PARTY-LICENCES.md): file origins,
+  third-party notices and what is still unresolved.
 
 Run the repository checks before publishing evidence:
 
