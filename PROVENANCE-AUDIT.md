@@ -1,4 +1,4 @@
-# Third-party licences and file origins
+# Provenance audit: file origins and third-party licences
 
 This audit records evidence and unknowns at input commit
 `5abfddceb2d864aeead76bff35fa4d17c24806e2`: 27 tracked paths. Primary
@@ -65,12 +65,14 @@ comments, commands or factual-data formatting.
 
 ### New audit outputs
 
-`THIRD-PARTY-LICENCES.md` and `file-inventory.tsv` are new records, absent at
-the input commit. They are accounted for here, outside the input inventory,
+`PROVENANCE-AUDIT.md` and `file-inventory.tsv` are new records, absent at the
+input commit. They are accounted for here, outside the input inventory,
 so the inventory does not hash itself. `README.md` gains only the link to
 this report; its input digest intentionally describes the earlier bytes.
 The new analysis and inventory do not relicense the material they identify.
-A later inventory can hash these outputs at their containing commit.
+A later inventory can hash these outputs at their containing commit. This
+report lists candidate notices for review; it is not the notices file of any
+distribution.
 
 ## 2. Repository examples, quotations and notices
 
