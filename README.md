@@ -11,7 +11,12 @@ arch-bootstrap  ->  hyperlab-ansible  ->  arch-hypervisor-lab
 base system         host + workloads      evidence + writeups
 ```
 
-Start with [`SETUP.md`](SETUP.md) for the Nitro path.
+Start with [`SETUP.md`](SETUP.md), the canonical newcomer guide from an
+authenticated upstream Arch Linux live prompt through installation, the first
+account and the existing host target. Use [Troubleshooting](TROUBLESHOOTING.md)
+for symptoms and [FAQ](FAQ.md) for hardware, media, erasure and security limits.
+The complete v1 installation remains blocked on software and hardware gates;
+the guide marks the stops. A project ISO is intended but not built or available.
 
 ## Lab shape
 
@@ -27,8 +32,15 @@ Arch Linux host
 NVIDIA dGPU -- VFIO --> one workload VM at a time
 ```
 
-The host uses the iGPU for Sway and Looking Glass. The dGPU is not shared by the
-host desktop. `services` never participates in GPU rotation.
+The existing `lab.yml` target uses the iGPU for Sway and Looking Glass; the dGPU
+belongs to one running VFIO workload at a time. Hyprland is preferred in the
+product contract and Sway remains the recovery compositor, but `lab.yml` does
+not assemble the complete v1 Hyprland/session/Create path. Services may use the
+GPU through an explicitly reviewed handoff profile and matching Template/spec.
+The clean → dev → dirty → lab GPU ladder only lowers within a host boot;
+returning to a cleaner use requires a host reboot. The optional per-run GPU
+lease is still Proposed and unimplemented. See the
+[setup boundaries](SETUP.md#2c-reconcile-the-existing-laptop-target-stop-before-claiming-v1).
 
 ## Repository set
 
@@ -52,6 +64,11 @@ the normal laptop target adds Sway and the Looking Glass host transport in that
 order. Host VFIO and the accelerated Linux video path have real evidence. Final
 Linux guest session persistence and Looking Glass input checks are still open.
 
+Both full-pipeline statuses are `pipeline-pending`; historical host/component
+results do not qualify the complete current v1 path. An explicit
+`no-gpu-passthrough` profile supplies a foundation without VFIO, with no
+accelerated desktop or physical single-GPU compatibility claim.
+
 The Acer Predator Helios 300 with RTX 3070 Mobile has a reviewed profile and
 individual component history, but the complete pipeline remains pending until it
 replays the same frozen repository commits used for the Nitro release.
@@ -74,7 +91,9 @@ Looking Glass display requirements and configuration parsing failures.
 - `hardware/`: compatibility policy, reports and evidence templates;
 - `problems/`: failure investigations;
 - `scripts/`: sanitized hardware collection and repository checks;
-- `SETUP.md`: operator path from a clean machine to the lab;
+- [`SETUP.md`](SETUP.md): live-medium-to-lab route, prerequisites and current stops;
+- [`TROUBLESHOOTING.md`](TROUBLESHOOTING.md): symptoms, read-only diagnosis and exact problem-note sources;
+- [`FAQ.md`](FAQ.md): short answers about hardware, ISO, recovery, workloads and security;
 - [`PROVENANCE-AUDIT.md`](PROVENANCE-AUDIT.md): file origins, candidate
   third-party notices and what is still unresolved;
 - [`SECURITY.md`](SECURITY.md): private reporting of vulnerabilities and of
