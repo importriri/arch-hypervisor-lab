@@ -95,7 +95,8 @@ Choose these before starting; do not edit tracked defaults:
 - **Language and time:** choose `TARGET_LOCALE`, `TARGET_KEYMAP`,
   `TARGET_TIMEZONE` and `TARGET_HOSTNAME`. Defaults are `en_US.UTF-8`, `us`,
   `Europe/Rome`, `hypervisor-01`. Console keymap, desktop keyboard layout and
-  locale are separate settings; both laptop desktop profiles default to `it`.
+  locale are separate settings; both laptop desktop profiles fix `it`, with a
+  runtime cycle to `us` and `ara` (see [2a](#2a-root-prepares-the-foundation-and-creates-the-account)).
   Recheck the keyboard before entering secrets. The bootstrap installs zram,
   no swap partition; stage 2 refuses unencrypted disk swap.
 - **Identity:** choose your own administrator name and hostname. Bootstrap
@@ -190,6 +191,13 @@ git rev-parse HEAD
 git status --short
 bash verify.sh
 ```
+
+This `-Sy` without `-u` is a deliberate, limited install into the ephemeral
+live environment, the same pattern the bootstrap engine itself uses for its
+keyring and `cryptsetup` updates. It is not an official installation-guide
+step, and Arch does not support partial upgrades. A dependency, library or
+`error while loading shared libraries` failure is a stop: boot a newer official
+ISO and start again. Do not run `pacman -Syu` on the live medium.
 
 Package names checked against the official Arch package database on 2026-10-28:
 [git](https://archlinux.org/packages/extra/x86_64/git/),
@@ -331,6 +339,10 @@ the running kernel, reboot into the installed kernel before compiling modules,
 then return to this checkout. Expect clean source, recorded commit and full
 `ALL GREEN`; an incomplete privileged render judge is not a pass. Stop on
 `VERIFICATION FAILED` or `VERIFICATION INCOMPLETE` and preserve the output.
+At a TTY its render judge needs the private runtime directory of a real login
+and prints `BECOME password (attempt N/3)`. It refuses an empty answer. As
+installed root, type root's own password there. Three refused answers end with
+`Render tests could not validate sudo credentials.` and a failed verification.
 
 Create `/root/hyperlab-host.yml` with `umask 077` and a local editor, **outside
 the checkout**. This non-secret file persists all identity overrides. Example
@@ -350,9 +362,18 @@ set it independently, and overriding `admin_user` alone does not change it.
 Use an ordinary lowercase account name with the default `/home/NAME` home,
 never `root`. For a deliberate no-passthrough foundation set
 `host_profile: no-gpu-passthrough` here instead; `auto` never falls back to it.
-Choose desktop keyboard overrides before later desktop reconciliation if the
-profile's Italian layout is unsuitable; see
-[desktop input defaults](https://github.com/importriri/hyperlab-ansible/blob/main/roles/host_desktop_sway/defaults/main.yml).
+The desktop keyboard is not a local choice today. The recorded hardware
+profile wins over the
+[desktop input defaults](https://github.com/importriri/hyperlab-ansible/blob/main/roles/host_desktop_sway/defaults/main.yml),
+both laptop profiles set `it`, the Sway session loads the layouts `it`, `us`,
+`ara` in that order, and the Hyprland role refuses any other baseline. Do not
+put `host_desktop_sway_input_defaults` or `host_profiles` in this file: the
+first does not change a laptop's layout, and the second replaces the reviewed
+profile contract. In Sway, `$mod+Ctrl+space` or the bar's keyboard indicator
+cycles `it` → `us` → `ara` and remembers the choice in
+`~/.config/hyperlab/keyboard-layout`. A different default layout needs a
+reviewed stage 2 change, not a local variable. `TARGET_KEYMAP` still sets
+the console keymap.
 
 Every subsequent Ansible command in this guide uses the same file:
 
@@ -365,7 +386,7 @@ ansible-playbook -K playbooks/foundation.yml -e "@$LAB_VARS"
 ```
 
 Run each only after its predecessor succeeds. `-K` requests become authorization;
-root needs no administrator password yet. Preflight validates the selected
+answer with root's own password, since no administrator password exists yet. Preflight validates the selected
 hardware; foundation checks storage before image-state writes. Unknown or
 ambiguous hardware stops here. Expect the selected profile, created account,
 managed foundation and `changed=0`, `failed=0`, `unreachable=0` on the final run.
@@ -396,7 +417,15 @@ install -d -m 0700 -o "$LAB_ADMIN" -g "$LAB_ADMIN" "/home/$LAB_ADMIN/.config" "/
 install -m 0600 -o "$LAB_ADMIN" -g "$LAB_ADMIN" "$LAB_VARS" "/home/$LAB_ADMIN/.config/hyperlab/host.yml"
 mv /root/hyperlab-ansible "/home/$LAB_ADMIN/hyperlab-ansible"
 chown -R "$LAB_ADMIN:$LAB_ADMIN" "/home/$LAB_ADMIN/hyperlab-ansible"
+cmp "$LAB_VARS" "/home/$LAB_ADMIN/.config/hyperlab/host.yml"
+rm -- "$LAB_VARS"
+unset LAB_VARS
 ```
+
+From here on the administrator's `~/.config/hyperlab/host.yml` is the only
+identity file. Root's copy is removed once `cmp` reports identical bytes, so a
+later edit cannot leave a stale `admin_user` behind. If `cmp` reports a
+difference, stop and keep both files for review.
 
 Check `getent` shows the chosen ordinary account and expected home before
 `passwd`. Set its password privately at the terminal; never put a password/hash
