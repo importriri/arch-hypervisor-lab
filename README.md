@@ -76,7 +76,13 @@ Looking Glass display requirements and configuration parsing failures.
 - `scripts/`: sanitized hardware collection and repository checks;
 - `SETUP.md`: operator path from a clean machine to the lab;
 - [`PROVENANCE-AUDIT.md`](PROVENANCE-AUDIT.md): file origins, candidate
-  third-party notices and what is still unresolved.
+  third-party notices and what is still unresolved;
+- [`SECURITY.md`](SECURITY.md): private reporting of vulnerabilities and of
+  private data published here by mistake;
+- [`EVIDENCE-THREAT-MODEL.md`](EVIDENCE-THREAT-MODEL.md): what the evidence
+  here can and cannot establish, and the manual review before publication;
+- [`CONTRIBUTING.md`](CONTRIBUTING.md): the checks, write-ups and evidence
+  contributions.
 
 Run the repository checks before publishing evidence:
 
@@ -84,6 +90,10 @@ Run the repository checks before publishing evidence:
 python scripts/verify_repo.py
 bash -n scripts/collect-hardware-report.sh
 ```
+
+They check consistency only. They are not a privacy review and do not
+show that a result happened; see
+[`EVIDENCE-THREAT-MODEL.md`](EVIDENCE-THREAT-MODEL.md).
 
 ## Scope
 
