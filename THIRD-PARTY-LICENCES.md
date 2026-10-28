@@ -2,8 +2,9 @@
 
 This audit records evidence and unknowns at input commit
 `5abfddceb2d864aeead76bff35fa4d17c24806e2`: 27 tracked paths. Primary
-records were retrieved or attempted on **2026-10-28**. The accompanying
-[`file-inventory.tsv`](file-inventory.tsv) accounts for the input bytes.
+records were retrieved or attempted on **2026-10-27 at 23:40 UTC**. The
+accompanying [`file-inventory.tsv`](file-inventory.tsv) accounts for the
+input bytes.
 
 This repository contains documents, configuration fragments and two scripts.
 It contains neither an installed lab nor a Windows workshop image. The root
@@ -20,7 +21,16 @@ input commit, including `.github/workflows/ci.yml`, all four boot entries
 and the libvirt fragment. Its path set, modes and digests were checked
 against Git objects independently of this report's counts. Temporary copies
 with a missing fragment, duplicate path or wrong digest must be rejected;
-these checks establish inventory integrity, not rights.
+these checks establish inventory integrity, not rights. From any clone that
+contains the input commit, this prints nothing but the final line when the
+inventory's paths, modes and digests match the input blobs:
+
+```sh
+git ls-tree -r 5abfddceb2d864aeead76bff35fa4d17c24806e2 |
+  while read -r mode type oid path; do
+    printf '%s\t%s\t%s\n' "$path" "$mode" "$(git cat-file blob "$oid" | sha256sum | cut -d' ' -f1)"
+  done | diff - <(tail -n +2 file-inventory.tsv | cut -f1,2,4) && echo match
+```
 
 | Column | Meaning |
 | --- | --- |
@@ -28,8 +38,8 @@ these checks establish inventory integrity, not rights.
 | `mode` | Git mode, `100644` or `100755` |
 | `file_type` | `regular`; no input symlinks or submodules |
 | `sha256` | SHA-256 of the input blob, not the current working copy |
-| `kind` | document, configuration, code, data, template or legal text |
-| `origin` | evidence limit; no ownership inferred from history |
+| `kind` | `doc`, `config`, `code`, `data`, `template` or `legal` |
+| `origin` | what this path itself shows about its source; no ownership inferred from history |
 | `evidence` | introducing commit/date and observations for this path |
 | `relationship` | shared examples, quotations, reported output or external references |
 | `licence` | declared licence and the limits of applying it to the bytes |
@@ -97,8 +107,8 @@ attract copyright or whether their reuse meets those conditions.
 
 **Possible ArchWiki source remains unchecked.** The freeze note names the
 [PCI passthrough via OVMF page](https://wiki.archlinux.org/title/PCI_passthrough_via_OVMF).
-Retrieval of that page and revision 883556 returned access denial/bot
-protection, not source text. No match to that revision is claimed. The
+Retrieval of that page returned access denial/bot protection, not source
+text, so no revision of it was compared and no match is claimed. The
 accessible [ArchWiki copyright record](https://wiki.archlinux.org/index.php?title=ArchWiki:Copyrights&oldid=613736)
 (revision 613736) states GFDL 1.3 or later unless otherwise noted. If material
 was taken from the wiki, establish the actual revision, contributor/history
@@ -200,7 +210,7 @@ redistribution permission.
 | U7 | Windows 11 guest | edition/media source and terms for the actual installation and any image redistribution; accounts and media stay private |
 | U12 | Unigine Valley benchmark in the GeForce note; Valley workload name in SETUP | edition/version/source/terms if retained in an image; a benchmark result does not redistribute the benchmark |
 
-Relevant primary records, retrieved on 2026-10-28:
+Relevant primary records, retrieved on 2026-10-27 at 23:40 UTC:
 
 - **VirtualDrivers:** [`LICENSE`](https://github.com/VirtualDrivers/Virtual-Display-Driver/blob/d7244969b2aa8bb38e76d79505eda217996cefea/LICENSE)
   is MIT, copyright 2024 Virtual Display. Its
