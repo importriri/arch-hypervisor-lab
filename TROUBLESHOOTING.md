@@ -166,7 +166,11 @@ managed guest, selected spec and the same local identity overrides. The CLI’s
 automatically load this guide’s local override file; use the explicit playbook
 for the manual route with your chosen account.
 That regeneration writes runtime state and pins, so it is a separate explicit
-step after diagnosis. An unsafe, linked, unreadable or wrong-owner file is a
+step after diagnosis. If it stops with `Runtime inventory requires the
+operator-owned runtime directory, private SSH identity and strict known-hosts
+database`, inspect `stat -c '%U %a %F %n'` on `$HOME/.ssh/hyperlab_ed25519` and
+`$HOME/.ssh/known_hosts`. A genuinely absent `known_hosts` is prepared as in
+[SETUP 5](SETUP.md#5-exercise-explicit-vm-lifecycle); any other state is a stop. An unsafe, linked, unreadable or wrong-owner file is a
 refusal requiring investigation, not permission to delete it. Do not copy a
 stale IP or disable strict host-key checking. Automatic repair is not accepted
 merely because code exists.

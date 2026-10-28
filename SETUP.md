@@ -592,6 +592,36 @@ your login's SSH agent). Only the `.pub` key enters cloud-init; private keys
 stay with you. Confirm the public fingerprint with
 `ssh-keygen -lf "$HOME/.ssh/hyperlab_ed25519.pub"`.
 
+The inventory step below also needs `~/.ssh/known_hosts`, and nothing in
+stage 2 creates it. `vm-guest-inventory.yml` refuses to pin a guest unless the
+private key and that file are both regular, non-symlink files owned by you.
+As your administrator, inspect without following links:
+
+```bash
+test ! -L "$HOME/.ssh"
+stat -c '%U %a %F %n' "$HOME/.ssh" "$HOME/.ssh/hyperlab_ed25519"
+stat -c '%U %a %F %n' "$HOME/.ssh/known_hosts"
+```
+
+Expect your account, `700 directory` and `600 regular file`. If `known_hosts`
+exists, the last `stat` must show your account, `regular file` or `regular
+empty file`, and no group/other write bit: keep its contents and create
+nothing. A symbolic link, another owner or type, or an unreadable file is a
+stop for review, never a reason to delete or replace it. Only when that `stat`
+reports `No such file or directory` (and exits 1, expected here), create an
+empty file, one command at a time, stopping on any nonzero exit:
+
+```bash
+test ! -e "$HOME/.ssh/known_hosts"
+test ! -L "$HOME/.ssh/known_hosts"
+install -m 0600 /dev/null "$HOME/.ssh/known_hosts"
+stat -c '%U %a %F %n' "$HOME/.ssh/known_hosts"
+```
+
+Expect your account and `600 regular empty file`. Leave it empty: do not fill
+it with `ssh-keyscan` or by accepting an SSH prompt. Guest host keys enter it
+only through the inventory step, which reads them with the QEMU Guest Agent.
+
 Follow the [first-Machine procedure](https://github.com/importriri/hyperlab-ansible/blob/main/docs/first-machine.md)
 only when its prerequisites are met. `hyperlabctl machine templates` and
 `hyperlabctl machine create-plan` inspect current choices; failure/absence of
@@ -605,7 +635,8 @@ can leave a record/spec/domain; inspect it before retrying instead of deleting
 unknown state. Never rerun host convergence as a workload reset.
 
 **SSH prerequisite:** a running managed Linux guest with working QEMU Guest
-Agent. `playbooks/vm-guest-inventory.yml` (host `-K`, selected `guest_spec`, local
+Agent, plus the key and `known_hosts` file prepared above.
+`playbooks/vm-guest-inventory.yml` (host `-K`, selected `guest_spec`, local
 overrides) obtains the address and new host key through the agent, pins that key
 and writes an operator-owned regular `0600` runtime inventory under
 `/run/user/UID`. Guest playbooks then use **both** `inventory.ini` and that runtime
