@@ -245,6 +245,13 @@ a configuration example does not grant permission to bundle its external
 binary. U9/U10 concern external tool versions; U11 concerns the separate
 installation and image closure. All remain open as described above.
 
+A component case is attached to every input path that instructs obtaining
+or installing that software, names it as part of a lab workload, or reports
+it installed or running. A product name used only to identify hardware, a
+VM name inside a captured log, a file name in a list or a compatibility
+state key is not counted as a reference. The `unresolved` column of the
+inventory is the authoritative path list for each case.
+
 This is a reviewable audit result, including explicit unknowns, rather than
 legal clearance or a release qualification. It changes no compatibility
 state. Manual evidence review, separate same-input Nitro/Predator campaigns
