@@ -125,9 +125,15 @@ its output is only as private as the machine it reads. Reading the script:
 - with no argument it writes `hardware-report.md` in the current directory,
   which is inside the checkout when run from its root.
 
-It does omit serial numbers, MAC addresses and IP addresses by not reading
-them. That is the whole of its sanitizing. Any other private string on the
-machine can still reach the output.
+It makes no dedicated query for serial numbers, MAC addresses or IP
+addresses: it does not read the DMI serial fields, network interfaces or
+addresses. That is the whole of its sanitizing, and it does not keep
+those values out of the report. The `virsh` diagnostics and the vendor
+free text are copied without filtering, so a connection URI such as
+`qemu+ssh://user@192.0.2.10/system` reaches the report with its user and
+address, and any other private string on the machine can too. Every
+report is reviewed for addresses, serials and names like any other
+artifact.
 
 ## Manual review before publication
 
@@ -205,6 +211,7 @@ None of these is safe or accepted because a script exits zero:
 | Input | Why it is not accepted |
 |---|---|
 | Raw collector output containing an account name | `stat` printed the owner; the collector wrote it and exited zero, and the verifier would pass it. Review removes it, and raw output never enters Git. |
+| A `virsh` diagnostic in the report naming `qemu+ssh://user@192.0.2.10/system` | The collector copied it unfiltered; the user name and the address are removed in review like any other. |
 | A screenshot nobody reviewed | Metadata and every visible word are unchecked; a terminal prompt or a notification may carry a user or host name. |
 | A forged receipt | Its digests verify its own bytes; nothing in it shows that the run happened. |
 | A green CI run with no hardware campaign | CI ran no laptop; it is a source check, never a pipeline pass. |
